@@ -103,8 +103,8 @@
                     <div class="bg-white h-28 rounded-lg flex items-center justify-center text-4xl shadow-inner mb-2 text-slate-400 font-bold">❓</div>
                     <p class="text-xs text-slate-600 font-medium">紀念小物 B (未解鎖)</p>
                 </div>
-                <div class="border-2 border-dashed border-amber-300 rounded-xl p-4 text-center bg-amber-50/50">
-                    <div class="text-3xl font-bold text-amber-800 mb-2">第 3 週</div>
+                <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center bg-blue-50/50">
+                    <div class="text-3xl font-bold text-blue-800 mb-2">第 3 週</div>
                     <div class="bg-white h-28 rounded-lg flex items-center justify-center text-4xl shadow-inner mb-2 text-slate-400 font-bold">❓</div>
                     <p class="text-xs text-slate-600 font-medium">紀念小物 C (未解鎖)</p>
                 </div>
@@ -128,7 +128,7 @@
                         <input type="text" id="userName" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：氣象小達人">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">手機號碼 (重複投票以最後一次為主) *</label>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">手機號碼 (重複投票以最後1次為主) *</label>
                         <input type="tel" id="userPhone" required pattern="[0-9]{10}" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：0912345678">
                     </div>
                 </div>
@@ -185,80 +185,13 @@
                     <ul class="list-disc list-inside text-slate-700 space-y-1">
                         <li>2016/11/08</li>
                         <li>2018/07/10</li>
-                        <li>2026/09/08 (漏斗雲，未觸地)</li>
+                        <li>2026/09/08 (漏斗雲未觸地)</li>
                     </ul>
                 </div>
                 <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                     <p class="font-bold text-indigo-900 mb-1">❄️ 歷史下雪紀錄</p>
                     <p class="text-slate-700">▪️ 2016年1月24日 (霸王級寒流)</p>
                 </div>
-            </div>
-        </section>
-
-        <!-- 後台管理區 -->
-        <section class="bg-slate-900 text-white rounded-2xl shadow-xl p-6 md:p-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-700 pb-4 gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        後台管理與投票統計
-                    </h2>
-                    <p class="text-sm text-slate-400">依時間區間篩選與查看所有投票明細</p>
-                </div>
-                <button onclick="loadVotes()" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">重新整理統計</button>
-            </div>
-
-            <!-- 篩選控制列 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-slate-800 p-4 rounded-xl border border-slate-700 text-sm">
-                <div>
-                    <label class="block text-slate-400 mb-1 font-medium">開始時間篩選</label>
-                    <input type="datetime-local" id="filterStart" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-medium">結束時間篩選</label>
-                    <input type="datetime-local" id="filterEnd" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-                </div>
-                <div class="flex items-end gap-2">
-                    <button onclick="filterVotes()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg transition">篩選區間</button>
-                    <button onclick="resetFilter()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-lg transition">重設</button>
-                </div>
-            </div>
-
-            <!-- 統計摘要數字 -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                    <div class="text-xs text-slate-400">總投票人數</div>
-                    <div id="statTotal" class="text-2xl font-bold text-sky-400 mt-1">0</div>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-                    <div class="text-xs text-slate-400">最多人預測</div>
-                    <div id="statTop" class="text-xl font-bold text-emerald-400 mt-1">-</div>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center col-span-2">
-                    <div class="text-xs text-slate-400 mb-1">選項分佈統計</div>
-                    <div id="statDist" class="text-xs text-slate-300 flex justify-around">
-                        <span>晴天: 0</span><span>降雨: 0</span><span>水龍捲: 0</span><span>下雪: 0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 投票明細清單表格 -->
-            <div class="overflow-x-auto rounded-xl border border-slate-700">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-800 text-xs uppercase text-slate-400 border-b border-slate-700">
-                        <tr>
-                            <th class="px-4 py-3">投票時間</th>
-                            <th class="px-4 py-3">姓名</th>
-                            <th class="px-4 py-3">手機號碼</th>
-                            <th class="px-4 py-3">預測選項</th>
-                        </tr>
-                    </thead>
-                    <tbody id="voteTableBody" class="divide-y divide-slate-800">
-                        <tr>
-                            <td colspan="4" class="px-4 py-6 text-center text-slate-500">尚無投票資料</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </section>
 
@@ -269,17 +202,9 @@
         <p>基隆氣象站建站 80 週年紀念活動 © 2026 All Rights Reserved.</p>
     </footer>
 
-    <!-- JavaScript 邏輯與 Google Sheets 串接 -->
+    <!-- 前台投票邏輯與 Google Sheets 串接 -->
     <script>
-        // ==========================================
-        // 💡 串接 Google 試算表設定區
-        // 如果您已經依照說明建立 Google Apps Script，
-        // 請將產生的「網頁應用程式網址」貼在下方引號中：
-        // 例如: let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/.../exec";
-        // ==========================================
         let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
-
-        // 本地模擬資料 (若未連線 Google Sheets 時使用)
         let localVotes = JSON.parse(localStorage.getItem('keelung_weather_votes')) || [];
 
         document.getElementById('voteForm').addEventListener('submit', async function(e) {
@@ -315,15 +240,13 @@
             } else {
                 saveLocal(newVote);
                 msgDiv.className = "mt-4 text-center font-bold text-emerald-600";
-                msgDiv.innerText = "🎉 投票成功！(手機號碼若重複將以最後一次為準)";
+                msgDiv.innerText = "🎉 投票成功！(手機號碼若重複將以最後1次為準)";
             }
 
             document.getElementById('voteForm').reset();
-            loadVotes();
         });
 
         function saveLocal(newVote) {
-            // 以手機號碼為認定：若重複則更新覆蓋最後一次
             const index = localVotes.findIndex(v => v.phone === newVote.phone);
             if (index !== -1) {
                 localVotes[index] = newVote;
@@ -332,105 +255,6 @@
             }
             localStorage.setItem('keelung_weather_votes', JSON.stringify(localVotes));
         }
-
-        async function loadVotes() {
-            let data = [];
-            if (GOOGLE_SHEET_API_URL) {
-                try {
-                    const response = await fetch(GOOGLE_SHEET_API_URL);
-                    data = await response.json();
-                } catch (e) {
-                    data = localVotes;
-                }
-            } else {
-                data = localVotes;
-            }
-            renderStatsAndTable(data);
-        }
-
-        function renderStatsAndTable(data) {
-            const tbody = document.getElementById('voteTableBody');
-            tbody.innerHTML = '';
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">尚無投票資料</td></tr>`;
-                document.getElementById('statTotal').innerText = '0';
-                document.getElementById('statTop').innerText = '-';
-                document.getElementById('statDist').innerHTML = `<span>晴天: 0</span><span>降雨: 0</span><span>水龍捲: 0</span><span>下雪: 0</span>`;
-                return;
-            }
-
-            document.getElementById('statTotal').innerText = data.length;
-
-            let counts = { '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
-            data.forEach(v => {
-                if (counts[v.prediction] !== undefined) {
-                    counts[v.prediction]++;
-                }
-            });
-
-            // 計算最多人預測
-            let topOpt = '-';
-            let maxCount = -1;
-            for (let opt in counts) {
-                if (counts[opt] > maxCount) {
-                    maxCount = counts[opt];
-                    topOpt = opt;
-                }
-            }
-            document.getElementById('statTop').innerText = maxCount > 0 ? topOpt : '-';
-            document.getElementById('statDist').innerHTML = `
-                <span>晴天: ${counts['1.晴天']}</span>
-                <span>降雨: ${counts['2.降雨']}</span>
-                <span>水龍捲: ${counts['3.水龍捲']}</span>
-                <span>下雪: ${counts['4.下雪']}</span>
-            `;
-
-            // 渲染表格
-            data.slice().reverse().forEach(v => {
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
-                const formattedTime = v.time ? new Date(v.time).toLocaleString() : '剛剛';
-                tr.innerHTML = `
-                    <td class="px-4 py-3 text-slate-400">${formattedTime}</td>
-                    <td class="px-4 py-3 font-medium text-white">${v.name || v.姓名 || ''}</td>
-                    <td class="px-4 py-3">${maskPhone(v.phone || v.手機號碼 || '')}</td>
-                    <td class="px-4 py-3"><span class="bg-blue-900/60 text-blue-300 px-2.5 py-1 rounded-full text-xs font-semibold">${v.prediction || v.預測天氣選項 || ''}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function maskPhone(phone) {
-            if (!phone || phone.length < 6) return phone;
-            return phone.substring(0, 4) + '***' + phone.substring(7);
-        }
-
-        async function filterVotes() {
-            const startVal = document.getElementById('filterStart').value;
-            const endVal = document.getElementById('filterEnd').value;
-            
-            let data = GOOGLE_SHEET_API_URL ? await (await fetch(GOOGLE_SHEET_API_URL)).json() : localVotes;
-
-            if (startVal || endVal) {
-                const startTime = startVal ? new Date(startVal).getTime() : 0;
-                const endTime = endVal ? new Date(endVal).getTime() : Date.now();
-                data = data.filter(v => {
-                    const t = new Date(v.time || v.時間).getTime();
-                    return t >= startTime && t <= endTime;
-                });
-            }
-            renderStatsAndTable(data);
-        }
-
-        function resetFilter() {
-            document.getElementById('filterStart').value = '';
-            document.getElementById('filterEnd').value = '';
-            loadVotes();
-        }
-
-        // 頁面載入時自動讀取統計
-        window.onload = loadVotes;
     </script>
 </body>
 </html>
