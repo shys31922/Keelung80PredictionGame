@@ -84,11 +84,18 @@
             </div>
         </div>
 
-        <!-- 投票明細清單表格 (前100筆) -->
+        <!-- 投票明細清單表格 (可切換最近/最初 100 筆) -->
         <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-700 font-bold text-white flex justify-between items-center">
-                <span>投票明細記錄列表</span>
-                <span id="tableCountTip" class="text-xs text-slate-400 font-normal">（顯示最近 100 筆紀錄）</span>
+            <div class="px-6 py-4 border-b border-slate-700 font-bold text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span>投票明細記錄列表</span>
+                    <span id="tableCountTip" class="text-xs text-slate-400 font-normal ml-2"></span>
+                </div>
+                <!-- 切換顯示按鈕群組 -->
+                <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700 text-xs">
+                    <button onclick="switchViewMode('recent')" id="btnRecent" class="px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow">最近 100 筆</button>
+                    <button onclick="switchViewMode('oldest')" id="btnOldest" class="px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">最初 100 筆</button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
@@ -119,7 +126,8 @@
     <script>
         let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
-        let localVotes = JSON.parse(localStorage.getItem('keelung_weather_votes')) || [];
+        let globalData = [];
+        let currentViewMode = 'recent'; // 'recent' 或 'oldest'
         let barChartInstance = null;
         let pieChartInstance = null;
 
@@ -130,13 +138,37 @@
                     const response = await fetch(GOOGLE_SHEET_API_URL);
                     data = await response.json();
                 } catch (e) {
-                    console.error("無法讀取 Google Sheets，改讀取本地暫存", e);
-                    data = localVotes;
+                    console.error("無法讀取 Google Sheets", e);
+                    data = [];
                 }
-            } else {
-                data = localVotes;
             }
-            renderStatsAndTable(data);
+            
+            // 統一格式化資料
+            globalData = data.map(v => ({
+                time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
+                name: v["姓名 (Name)"] !== undefined ? v["姓名 (Name)"] : (v.name || v.姓名 || ''),
+                phone: String(v["手機號碼 (Phone)"] !== undefined ? v["手機號碼 (Phone)"] : (v.phone || v.手機號碼 || '')).trim(),
+                prediction: v["預測天氣選項 (Prediction)"] || v.prediction || v.預測天氣選項 || ''
+            }));
+
+            renderStatsAndTable(globalData);
+        }
+
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            const btnRecent = document.getElementById('btnRecent');
+            const btnOldest = document.getElementById('btnOldest');
+
+            if (mode === 'recent') {
+                btnRecent.className = "px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnOldest.className = "px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+            } else {
+                btnOldest.className = "px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnRecent.className = "px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+            }
+
+            // 重新篩選或直接刷新表格顯示
+            filterVotes();
         }
 
         function renderStatsAndTable(data) {
@@ -149,30 +181,22 @@
                 document.getElementById('statUniqueUsers').innerText = '0';
                 document.getElementById('statTop').innerText = '-';
                 updateCharts({ '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 });
+                document.getElementById('tableCountTip.innerText') = '';
                 return;
             }
 
-            // 統一欄位對應（相容中文或英文欄位名稱）
-            const formattedData = data.map(v => ({
-                time: v.time || v.時間 || new Date().toISOString(),
-                name: v.name || v.姓名 || '',
-                phone: String(v.phone || v.手機號碼 || '').trim(),
-                prediction: v.prediction || v.預測天氣選項 || ''
-            }));
-
             // 1. 總投票數量
-            const totalSubmissions = formattedData.length;
+            const totalSubmissions = data.length;
             document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
 
-            // 2. 獨立投票人數 (以手機號碼去重)
-            const uniquePhones = new Set(formattedData.map(v => v.phone).filter(p => p !== ''));
+            // 2. 獨立投票人數 (手機號碼去重)
+            const uniquePhones = new Set(data.map(v => v.phone).filter(p => p !== ''));
             document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
 
             // 3. 各選項統計
             let counts = { '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
-            formattedData.forEach(v => {
-                let opt = v.prediction;
-                // 模糊比對修正選項格式
+            data.forEach(v => {
+                let opt = String(v.prediction);
                 if (opt.includes('晴')) opt = '1.晴天';
                 else if (opt.includes('雨')) opt = '2.降雨';
                 else if (opt.includes('水龍捲')) opt = '3.水龍捲';
@@ -197,9 +221,15 @@
             // 更新圖表
             updateCharts(counts);
 
-            // 5. 限制只顯示前 100 筆明細（取最新 100 筆）
-            const displayData = formattedData.slice().reverse().slice(0, 100);
-            document.getElementById('tableCountTip').innerText = `（顯示最近 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+            // 5. 處理列表顯示：依據選擇模式決定要看最近100筆還是最初100筆
+            let displayData = [];
+            if (currentViewMode === 'recent') {
+                displayData = data.slice().reverse().slice(0, 100);
+                document.getElementById('tableCountTip').innerText = `（顯示最近 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+            } else {
+                displayData = data.slice(0, 100);
+                document.getElementById('tableCountTip').innerText = `（顯示最初 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+            }
 
             displayData.forEach(v => {
                 const tr = document.createElement('tr');
@@ -270,36 +300,27 @@
             });
         }
 
-        async function filterVotes() {
+        function filterVotes() {
             const startVal = document.getElementById('filterStart').value;
             const endVal = document.getElementById('filterEnd').value;
             
-            let data = [];
-            if (GOOGLE_SHEET_API_URL) {
-                try {
-                    data = await (await fetch(GOOGLE_SHEET_API_URL)).json();
-                } catch(e) {
-                    data = localVotes;
-                }
-            } else {
-                data = localVotes;
-            }
+            let filtered = [...globalData];
 
             if (startVal || endVal) {
                 const startTime = startVal ? new Date(startVal).getTime() : 0;
                 const endTime = endVal ? new Date(endVal).getTime() : Date.now();
-                data = data.filter(v => {
-                    const t = new Date(v.time || v.時間).getTime();
+                filtered = filtered.filter(v => {
+                    const t = new Date(v.time).getTime();
                     return t >= startTime && t <= endTime;
                 });
             }
-            renderStatsAndTable(data);
+            renderStatsAndTable(filtered);
         }
 
         function resetFilter() {
             document.getElementById('filterStart').value = '';
             document.getElementById('filterEnd').value = '';
-            loadVotes();
+            renderStatsAndTable(globalData);
         }
 
         window.onload = loadVotes;
