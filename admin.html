@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基隆氣象站 80 週年 - 管理員後台與投票統計</title>
+    <title>基隆氣象站 80 周年 - 管理員後台與投票統計</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js 圖表庫 CDN -->
@@ -15,7 +15,6 @@
             background-color: #0f172a;
             color: #f8fafc;
         }
-        /* 優化時間選擇器的外觀，點擊輸入框任意處更容易喚醒時鐘/日期選單 */
         input[type="datetime-local"] {
             cursor: pointer;
         }
@@ -37,14 +36,14 @@
             </div>
         </div>
 
-        <!-- 篩選控制列 (含時鐘選擇) -->
+        <!-- 篩選控制列 -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800 p-5 rounded-2xl border border-slate-700 text-sm shadow-lg">
             <div>
-                <label class="block text-slate-300 mb-1 font-medium">開始時間篩選 (點擊可選日期與時鐘)</label>
+                <label class="block text-slate-300 mb-1 font-medium">開始時間篩選</label>
                 <input type="datetime-local" id="filterStart" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-sky-500">
             </div>
             <div>
-                <label class="block text-slate-300 mb-1 font-medium">結束時間篩選 (點擊可選日期與時鐘)</label>
+                <label class="block text-slate-300 mb-1 font-medium">結束時間篩選</label>
                 <input type="datetime-local" id="filterEnd" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-sky-500">
             </div>
             <div class="flex items-end gap-2">
@@ -53,7 +52,7 @@
             </div>
         </div>
 
-        <!-- 統計摘要數字 (總投票數量與獨立人數) -->
+        <!-- 統計摘要數字 -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
                 <div class="text-xs text-slate-400 font-medium">總投票數量 (提交總次數)</div>
@@ -69,16 +68,14 @@
             </div>
         </div>
 
-        <!-- 圖表分析區 (柱狀圖與比例圓餅圖) -->
+        <!-- 圖表分析區 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 柱狀圖 -->
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col items-center">
                 <h3 class="text-sm font-bold text-slate-300 mb-4 self-start">📈 各預測選項票數柱狀圖</h3>
                 <div class="w-full h-64 flex items-center justify-center">
                     <canvas id="barChart"></canvas>
                 </div>
             </div>
-            <!-- 比例圓餅圖 -->
             <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col items-center">
                 <h3 class="text-sm font-bold text-slate-300 mb-4 self-start">🥧 各預測選項比例圓餅圖</h3>
                 <div class="w-full h-64 flex items-center justify-center">
@@ -87,11 +84,11 @@
             </div>
         </div>
 
-        <!-- 投票明細清單表格 -->
+        <!-- 投票明細清單表格 (前100筆) -->
         <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-700 font-bold text-white flex justify-between items-center">
                 <span>投票明細記錄列表</span>
-                <span class="text-xs text-slate-400 font-normal">（顯示所有原始提交紀錄）</span>
+                <span id="tableCountTip" class="text-xs text-slate-400 font-normal">（顯示最近 100 筆紀錄）</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
@@ -115,7 +112,7 @@
 
     <!-- 頁尾 -->
     <footer class="text-center text-slate-500 text-xs py-8 mt-12 border-t border-slate-800">
-        <p>基隆氣象站建站 80 週年紀念活動後台管理系統 © 2026</p>
+        <p>基隆氣象站建站 80 周年紀念活動後台管理系統 © 2026</p>
     </footer>
 
     <!-- 後台資料載入、圖表與篩選邏輯 -->
@@ -155,20 +152,38 @@
                 return;
             }
 
-            const totalSubmissions = data.length;
+            // 統一欄位對應（相容中文或英文欄位名稱）
+            const formattedData = data.map(v => ({
+                time: v.time || v.時間 || new Date().toISOString(),
+                name: v.name || v.姓名 || '',
+                phone: String(v.phone || v.手機號碼 || '').trim(),
+                prediction: v.prediction || v.預測天氣選項 || ''
+            }));
+
+            // 1. 總投票數量
+            const totalSubmissions = formattedData.length;
             document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
 
-            const uniquePhones = new Set(data.map(v => v.phone || v.手機號碼));
+            // 2. 獨立投票人數 (以手機號碼去重)
+            const uniquePhones = new Set(formattedData.map(v => v.phone).filter(p => p !== ''));
             document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
 
+            // 3. 各選項統計
             let counts = { '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
-            data.forEach(v => {
-                const opt = v.prediction || v.預測天氣選項 || '';
+            formattedData.forEach(v => {
+                let opt = v.prediction;
+                // 模糊比對修正選項格式
+                if (opt.includes('晴')) opt = '1.晴天';
+                else if (opt.includes('雨')) opt = '2.降雨';
+                else if (opt.includes('水龍捲')) opt = '3.水龍捲';
+                else if (opt.includes('雪')) opt = '4.下雪';
+
                 if (counts[opt] !== undefined) {
                     counts[opt]++;
                 }
             });
 
+            // 4. 最多人預測選項
             let topOpt = '-';
             let maxCount = -1;
             for (let opt in counts) {
@@ -179,22 +194,23 @@
             }
             document.getElementById('statTop').innerText = maxCount > 0 ? topOpt : '-';
 
+            // 更新圖表
             updateCharts(counts);
 
-            data.slice().reverse().forEach(v => {
+            // 5. 限制只顯示前 100 筆明細（取最新 100 筆）
+            const displayData = formattedData.slice().reverse().slice(0, 100);
+            document.getElementById('tableCountTip').innerText = `（顯示最近 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+
+            displayData.forEach(v => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/30 transition";
-                const timeVal = v.time || v.時間 || '';
-                const formattedTime = timeVal ? new Date(timeVal).toLocaleString() : '剛剛';
-                const nameVal = v.name || v.姓名 || '';
-                const phoneVal = v.phone || v.手機號碼 || '';
-                const predVal = v.prediction || v.預測天氣選項 || '';
+                const formattedTime = v.time ? new Date(v.time).toLocaleString() : '剛剛';
 
                 tr.innerHTML = `
                     <td class="px-6 py-3.5 text-slate-400 text-xs">${formattedTime}</td>
-                    <td class="px-6 py-3.5 font-medium text-white">${nameVal}</td>
-                    <td class="px-6 py-3.5 font-mono text-slate-300">${phoneVal}</td>
-                    <td class="px-6 py-3.5"><span class="bg-sky-950 text-sky-300 border border-sky-800/50 px-3 py-1 rounded-full text-xs font-semibold">${predVal}</span></td>
+                    <td class="px-6 py-3.5 font-medium text-white">${v.name}</td>
+                    <td class="px-6 py-3.5 font-mono text-slate-300">${v.phone}</td>
+                    <td class="px-6 py-3.5"><span class="bg-sky-950 text-sky-300 border border-sky-800/50 px-3 py-1 rounded-full text-xs font-semibold">${v.prediction}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
