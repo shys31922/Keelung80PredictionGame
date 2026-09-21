@@ -69,7 +69,7 @@
         <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-700 font-bold text-white flex justify-between items-center">
                 <span>投票明細記錄列表</span>
-                <span class="text-xs text-slate-400 font-normal">（依手機號碼去重，保留最新一次投票）</span>
+                <span class="text-xs text-slate-400 font-normal">（依手機號碼去重，保留最新 1 次投票）</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
@@ -99,7 +99,7 @@
     <!-- 後台資料載入與篩選邏輯 -->
     <script>
         // 💡 請在此處填入您 Google Apps Script 的網頁應用程式網址 (需與前台一致)
-        let GOOGLE_SHEET_API_URL = ""; 
+        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
         let localVotes = JSON.parse(localStorage.getItem('keelung_weather_votes')) || [];
 
