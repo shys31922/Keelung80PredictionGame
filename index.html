@@ -99,7 +99,7 @@
                 <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-slate-200 shadow-sm leading-relaxed">
                     📱 <strong class="text-slate-900">直播抽獎規則：</strong> 
                     將於 <strong class="text-amber-600 font-bold">12:30 - 13:30</strong> 於基隆氣象站 80 周年站慶活動現場，請嘉賓摸彩抽出幸運得獎人（說得算獎、參加碼獎）
-                    現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">2 組得獎人號碼、響 5 聲未接聽</strong>，將直接開放現場 Call In 遞補（<strong class="text-emerald-600 font-bold">無論您當時預測對與否皆可參與！走過路過不要錯過囉！</strong>）。
+                    現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">2 組得獎人號碼、響 5 聲未接聽</strong>，將直接開放現場 Call In 遞補（<strong class="text-emerald-600 font-bold">無論您當時預測對與否皆可參與！走過路過不要錯過囉！</strong>）
                 </p>
             </div>
         </section>
@@ -304,15 +304,15 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name, phone, prediction })
                     });
-                    showToast("投票成功！", "感謝您的參與，您的預測已順利登錄。");
+                    showToast("投票成功！", "感謝您的參與，您的預測已順利登錄");
                 } catch (error) {
                     console.error(error);
-                    showToast("網路連線不穩", "請移至網路通暢處，或再試 1 次。", "warning");
+                    showToast("網路連線不穩", "請移至網路通暢處，或再試 1 次", "warning");
                     saveLocal(newVote);
                 }
             } else {
                 saveLocal(newVote);
-                showToast("投票成功！", "感謝您的參與（重複投票將以最後 1 次為準）。");
+                showToast("投票成功！", "感謝您的參與（重複投票將以最後 1 次為準）");
             }
 
             document.getElementById('voteForm').reset();
