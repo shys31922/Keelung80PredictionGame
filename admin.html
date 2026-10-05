@@ -59,7 +59,7 @@
                 <div id="statTotalSubmissions" class="text-3xl font-bold text-sky-400 mt-1">0</div>
             </div>
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
-                <div class="text-xs text-slate-400 font-medium">獨立投票人數 (手機號碼去重，取最後一次)</div>
+                <div class="text-xs text-slate-400 font-medium">獨立投票人數 (手機號碼去重)</div>
                 <div id="statUniqueUsers" class="text-3xl font-bold text-emerald-400 mt-1">0</div>
             </div>
             <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
@@ -183,25 +183,17 @@
                 return;
             }
 
-            // 1. 總投票數量 (所有送出紀錄)
+            // 1. 總投票數量
             const totalSubmissions = data.length;
             document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
 
-            // 2. 獨立投票人數 (手機號碼去重：依時間排序後，同手機號碼僅保留最後一次的投票紀錄來計算)
-            const uniqueMap = new Map();
-            // 先確保資料按時間由舊到新排序，這樣後面覆蓋上去的就會是最新的一筆
-            const sortedForUnique = [...data].sort((a, b) => new Date(a.time) - new Date(b.time));
-            sortedForUnique.forEach(v => {
-                if (v.phone) {
-                    uniqueMap.set(v.phone, v);
-                }
-            });
-            const uniqueVoters = Array.from(uniqueMap.values());
-            document.getElementById('statUniqueUsers').innerText = uniqueVoters.length;
+            // 2. 獨立投票人數 (手機號碼去重)
+            const uniquePhones = new Set(data.map(v => v.phone).filter(p => p !== ''));
+            document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
 
-            // 3. 各選項統計：圖表與熱門選項應以「去重後（每人以最後一次投票為準）」的結果來統計才符合遊戲規則
+            // 3. 各選項統計
             let counts = { '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
-            uniqueVoters.forEach(v => {
+            data.forEach(v => {
                 let opt = String(v.prediction);
                 if (opt.includes('晴')) opt = '1.晴天';
                 else if (opt.includes('雨')) opt = '2.降雨';
