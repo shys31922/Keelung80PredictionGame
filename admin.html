@@ -178,7 +178,7 @@
                 document.getElementById('statTotalSubmissions').innerText = '0';
                 document.getElementById('statUniqueUsers').innerText = '0';
                 document.getElementById('statTop').innerText = '-';
-                updateCharts({ '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 });
+                updateCharts({ '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 });
                 document.getElementById('tableCountTip').innerText = '';
                 return;
             }
@@ -192,12 +192,12 @@
             document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
 
             // 3. 各選項統計
-            let counts = { '1.晴天': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
+            let counts = { '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
             data.forEach(v => {
                 let opt = String(v.prediction);
-                if (opt.includes('晴')) opt = '1.晴天';
+                if (opt.includes('未')) opt = '1.未降雨';
                 else if (opt.includes('雨')) opt = '2.降雨';
-                else if (opt.includes('水龍捲')) opt = '3.水龍捲';
+                else if (opt.includes('水龍')) opt = '3.水龍捲';
                 else if (opt.includes('雪')) opt = '4.下雪';
 
                 if (counts[opt] !== undefined) {
@@ -252,8 +252,8 @@
         }
 
         function updateCharts(counts) {
-            const labels = ['1.晴天', '2.降雨', '3.水龍捲', '4.下雪'];
-            const values = [counts['1.晴天'], counts['2.降雨'], counts['3.水龍捲'], counts['4.下雪']];
+            const labels = ['1.未降雨', '2.降雨', '3.水龍捲', '4.下雪'];
+            const values = [counts['1.未降雨'], counts['2.降雨'], counts['3.水龍捲'], counts['4.下雪']];
             const backgroundColors = ['#f59e0b', '#3b82f6', '#a855f7', '#06b6d4'];
 
             if (barChartInstance) barChartInstance.destroy();
