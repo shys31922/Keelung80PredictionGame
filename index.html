@@ -20,7 +20,7 @@
         }
         .bg-watercolor {
             background: linear-gradient(135deg, rgba(240,244,248,0.9) 0%, rgba(203,220,237,0.95) 100%), 
-                        url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80');
+                url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80');
             background-blend-mode: overlay;
             background-size: cover;
             background-position: center;
@@ -172,19 +172,19 @@
             </div>
         </section>
         
-            <div class="space-y-4 bg-blue-50 border border-blue-100 p-5 rounded-2xl shadow-sm text-slate-700">
-                <!-- 投票規則備註 -->
-                <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
-                    💡 <strong class="text-blue-950">投票規則及領獎聯絡電話：</strong> 可以重複投票，將以您 <strong class="text-blue-700 font-bold">手機號碼最後 1 次送出的投票</strong> 為準！
-                    凡參加投票的朋友，1 支手機領取 1 件紀念小物，請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <strong class="text-blue-700 font-bold">基隆氣象站 (02-2422-4240)</strong> 或 <strong class="text-blue-700 font-bold">中央氣象署大氣觀測組 (02-2349-1025)</strong> 親自領取唷！
-                </p>
-                <!-- 直播抽獎規則 -->
-                <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
-                    📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
-                    將於基隆氣象站 80 周年站慶活動現場，抽出幸運得獎人（您說的對獎、參加加碼獎），
-                    現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</strong>，將直接開放現場 Call In 遞補！
-                </p>
-            </div>
+        <div class="space-y-4 bg-blue-50 border border-blue-100 p-5 rounded-2xl shadow-sm text-slate-700">
+            <!-- 投票規則備註 -->
+            <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
+                💡 <strong class="text-blue-950">投票規則及領獎聯絡電話：</strong> 可以重複投票，將以您 <strong class="text-blue-700 font-bold">手機號碼最後 1 次送出的投票</strong> 為準！
+                凡參加投票的朋友，1 支手機領取 1 件紀念小物，請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <strong class="text-blue-700 font-bold">基隆氣象站 (02-2422-4240)</strong> 或 <strong class="text-blue-700 font-bold">中央氣象署大氣觀測組 (02-2349-1025)</strong> 親自領取唷！
+            </p>
+            <!-- 直播抽獎規則 -->
+            <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
+                📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
+                將於基隆氣象站 80 周年站慶活動現場，抽出幸運得獎人（您說的對獎、參加加碼獎），
+                現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</strong>，將直接開放現場 Call In 遞補！
+            </p>
+        </div>
 
         <!-- 每週公布獎項照片區 -->
         <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
@@ -216,6 +216,7 @@
                     <p class="text-xs text-slate-600 font-medium">紀念禮品 (未解鎖)</p>
                 </div>
             </div>
+        </section>
 
         <!-- 即時投票人次統計看板 -->
         <section class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl shadow-xl p-6 flex items-center justify-between">
@@ -313,7 +314,9 @@
 
     <!-- 前台投票邏輯與通知控制 -->
     <script>
-        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
+        const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
+        const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
+        let currentFormData = {};
 
         function showToast(title, desc = '') {
             const toast = document.getElementById('toastNotification');
@@ -340,12 +343,10 @@
                 const count = (data && Array.isArray(data) && data.length > 1) ? data.length - 1 : 0;
                 document.getElementById('publicTotalCount').innerText = count;
             } catch (e) {
+                console.error("無法取得投票人次", e);
                 document.getElementById('publicTotalCount').innerText = "0";
             }
         }
-
-        let currentFormData = {};
-        const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
 
         document.getElementById('preSubmitBtn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -417,7 +418,7 @@
                         body: JSON.stringify(currentFormData)
                     });
                 } catch (error) {
-                    console.error(error);
+                    console.error("送出表單發生錯誤", error);
                 }
             }
 
@@ -437,7 +438,7 @@
             setTimeout(fetchPublicTotal, 2000);
         });
 
-        // 1. 修正後的「複製資訊」按鈕
+        // 複製資訊按鈕
         document.getElementById('copyInfoBtn').addEventListener('click', function() {
             const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
             navigator.clipboard.writeText(safeText).then(() => {
@@ -447,7 +448,7 @@
             });
         });
 
-        // 2. 「儲存圖片」按鈕功能 (手機支援原生 Share 存入相簿 / 電腦下載)
+        // 儲存圖片按鈕
         document.getElementById('saveImageBtn').addEventListener('click', async function() {
             const cardArea = document.getElementById('resultCardArea');
             try {
@@ -455,7 +456,6 @@
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], `基隆氣象站80週年預測憑證_${currentFormData.serialNumber}.png`, { type: 'image/png' });
                     
-                    // 嘗試使用行動裝置原生 Share API (可直接存至手機相簿)
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
@@ -469,9 +469,8 @@
                         }
                     }
 
-                    // 傳統下載方式
                     const link = document.createElement('a');
-                    link.download = `基隆氣象站80週年天氣預測憑證_${currentFormData.serialNumber}.png`;
+                    link.download = `基隆氣象站80週年預測憑證_${currentFormData.serialNumber}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.click();
                     showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
@@ -482,22 +481,16 @@
             }
         });
 
-const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
-
-        // 分享到 LINE（純跳轉，帶入預設文字與固定網址）
+        // 分享到 LINE
         document.getElementById('shareLineBtn').addEventListener('click', function() {
             const shareText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測囉！我的預測：${currentFormData.prediction}\n快來一起參加活動抽大獎！\n${FIXED_SHARE_URL}`;
-            
             const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`;
             window.open(lineUrl, '_blank');
         });
 
-        // 分享到 Facebook（純跳轉，同時帶入預設文字 quote 與固定網址）
+        // 分享到 Facebook
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            // 準備要帶入的預設文字
             const quoteText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測了！我的預測是：${currentFormData.prediction} ☀️🌧️\n快來一起參加活動拿好禮！`;
-            
-            // 結合固定網址與引言參數
             const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(FIXED_SHARE_URL)}&quote=${encodeURIComponent(quoteText)}`;
             
             const width = 600;
