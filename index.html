@@ -181,8 +181,9 @@
             <!-- 直播抽獎規則 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
-                將於基隆氣象站 80 周年站慶活動現場，抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
-                現場會直接撥打電話給得獎人， <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！若撥打響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽，將直接開放現場 Call In 遞補！
+                將於基隆氣象站臉書直播，抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
+                <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！若撥打響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽， 
+                <strong class="text-emerald-600 font-bold">將直接開放現場 Call In 遞補</strong> ！撥入手機號碼及撥通時所需的通關密語，將公告於臉書直播貼文
             </p>
         </div>
 
@@ -262,6 +263,7 @@
             
             <div id="resultCardArea" class="bg-blue-50 border-2 border-dashed border-blue-300 p-4 rounded-2xl space-y-2 text-left text-sm">
                 <div class="text-center pb-2 border-b border-blue-200">
+                    <span class="text-lg text-blue-600 block">【基隆氣象站 80 週年天氣預測投票】</span>
                     <span class="text-xs text-blue-600 block">您的專屬序號</span>
                     <span id="resultSerial" class="text-2xl font-black text-blue-950 tracking-wider">KL80-Loading...</span>
                 </div>
@@ -506,7 +508,7 @@
 
         // ===== 分享到 LINE =====
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
             const url = getPageUrl();
             if (IS_MOBILE) {
                 window.location.href = 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText + '\n' + url);
@@ -516,21 +518,21 @@
             }
         });
 
-        // ===== 分享到 Facebook =====
+        // ===== 分享到 Facebook (導向固定連結、無縮圖、不帶預設文字) =====
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\nhttps://shys31922.github.io/Keelung80PredictionGame/?t=1111`;
+            const fixedUrl = getPageUrl();
             
-            // 自動複製包含網址的完整文案至剪貼簿
-            const copied = legacyCopy(shareText);
-            if (copied) {
-                showToast("文案已複製！", "Facebook 貼文內容已複製，直接貼上即可發文。");
-            }
+            // 使用 Facebook 標準分享網址，只帶入固定網址參數
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fixedUrl)}`;
             
-            // 開啟 Facebook 主頁讓使用者直接發文
-            const fbUrl = `https://www.facebook.com/`;
-            const w = window.open(fbUrl, '_blank');
-            if (!w) {
+            // 各大內建瀏覽器（FB, Line, iOS, Android）與跨平台自動跳轉
+            if (IS_MOBILE) {
                 window.location.href = fbUrl;
+            } else {
+                const w = window.open(fbUrl, '_blank', 'width=600,height=400');
+                if (!w) {
+                    window.location.href = fbUrl;
+                }
             }
         });
 
