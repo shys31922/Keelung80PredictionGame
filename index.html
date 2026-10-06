@@ -510,7 +510,7 @@
 
         // ===== 分享到 LINE =====
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】我剛剛已經完成投票囉！\n🎯 我的預測：${currentFormData.prediction}！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
             const url = getPageUrl();
             if (IS_MOBILE) {
                 window.location.href = 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText + '\n' + url);
@@ -520,31 +520,46 @@
             }
         });
 
-        // ===== 分享到 Facebook (1. 複製預設文字與固定網址 -> 2. 導向 FB 發文頁面 -> 3. 提示貼上) =====
-        document.getElementById('shareFbBtn').addEventListener('click', function() {
-            // 1. 取得預設文字與固定網址，並組合在一起
+        // ===== 分享到 Facebook (相容 LINE/FB 內建瀏覽器與電腦版) =====
+        document.getElementById('shareFbBtn').addEventListener('click', async function() {
+            // 1. 組合預設文字與固定網址
             const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\n${getPageUrl()}`;
 
-            // 2. 自動將組合好的內容複製到剪貼簿（暫存）
-            const copied = legacyCopy(shareText);
-            if (copied) {
-                showToast("文案與網址已複製！", "進入 Facebook 後，請在發文框「長按或 Ctrl+V 貼上」即可");
-            } else {
-                alert("已準備好文案，請手動複製！");
-            }
-
-            // 3. 導向 Facebook 發文/首頁面
             const fbUrl = `https://www.facebook.com/`;
 
-            // 依照手機與電腦分流處理
+            // 2. 嘗試使用現代瀏覽器的 navigator.clipboard (對手機內建瀏覽器支援度最好)
+            let copied = false;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareText);
+                    copied = true;
+                }
+            } catch (err) {
+                console.log('Clipboard API 失敗，改用傳統備用方法');
+            }
+
+            // 如果現代方法失敗，改用傳統 legacyCopy
+            if (!copied) {
+                copied = legacyCopy(shareText);
+            }
+
+            // 3. 給予提示並流暢跳轉
+            if (copied) {
+                showToast("文案與網址已複製！", "進入 Facebook 後，請長按或 Ctrl+V 貼上即可。");
+            }
+
+            // 4. 依照手機與電腦分流跳轉（加入極短暫的 300 毫秒延遲，確保剪貼簿順利寫入再跳走）
             if (IS_MOBILE) {
-                // 手機：直接在當前頁面跳轉到 FB
-                window.location.href = fbUrl;
+                setTimeout(function() {
+                    window.location.href = fbUrl;
+                }, 300);
             } else {
-                // 電腦版：開新視窗或直接跳轉
+                // 電腦版先開新視窗
                 const w = window.open(fbUrl, '_blank');
                 if (!w) {
-                    window.location.href = fbUrl;
+                    setTimeout(function() {
+                        window.location.href = fbUrl;
+                    }, 300);
                 }
             }
         });
