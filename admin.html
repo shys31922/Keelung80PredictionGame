@@ -3,528 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基隆氣象站建站 80 周年：雨港海韻·氣象八十 - 天氣預測投票</title>
+    <title>基隆氣象站 80 周年 - 管理員後台與投票統計</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- html2canvas 用於存檔圖片 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js 圖表庫 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f0f4f8;
-            color: #1e293b;
+            background-color: #0f172a;
+            color: #f8fafc;
         }
-        h1, h2, h3, .serif-title {
-            font-family: 'Noto Serif TC', serif;
-        }
-        .bg-watercolor {
-            background: linear-gradient(135deg, rgba(240,244,248,0.9) 0%, rgba(203,220,237,0.95) 100%), 
-                        url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80');
-            background-blend-mode: overlay;
-            background-size: cover;
-            background-position: center;
-        }
-        #toastNotification {
-            transition: all 0.3s ease-in-out;
+        input[type="datetime-local"] {
+            cursor: pointer;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between relative">
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
 
-    <!-- 頂部標題海報風格區 -->
-    <header class="bg-watercolor shadow-md border-b-4 border-blue-800 text-slate-800 py-12 px-4 text-center relative overflow-hidden">
-        <div class="max-w-4xl mx-auto relative z-10 bg-white/50 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-lg border border-white/50">
-            <span class="inline-block bg-blue-900 text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest shadow">基隆氣象站 80 周年紀念活動</span>
-            <h1 class="text-3xl md:text-5xl font-th text-blue-950 font-black tracking-wider mb-2 drop-shadow-sm">雨港海韻 · 氣象八十</h1>
-            <p class="text-lg md:text-xl font-bold text-blue-900 tracking-widest">站慶 11/11 天氣預測大挑戰</p>
-        </div>
-    </header>
-
-    <!-- 主要內容區 -->
-    <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow space-y-8">
-
-        <!-- 遊戲規則及時程說明 -->
-        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-8 border-blue-700">
-            <h2 class="text-2xl font-bold text-blue-900 mb-6 flex items-center">
-                <svg class="w-7 h-7 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                遊戲規則及活動辦法
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-slate-700 text-sm md:text-base">
-                <div class="bg-blue-50 p-4 rounded-xl space-y-2 border border-blue-100">
-                    <p class="font-bold text-blue-900">⏰ 重要時間</p>
-                    <p><strong>開放預測：</strong>10月07日 08:00 至 11月08日 24:00</p>
-                    <p><strong>開獎時間：</strong>11月11日 12:30 ~ 13:30</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl space-y-2 border border-blue-100">
-                    <p class="font-bold text-blue-900">▶️ 直播預告</p>
-                    <p><strong>開獎方式：</strong>基隆氣象站臉書直播抽出得獎人，並立即撥打得獎人手機，撥通時請說出通關密語：祝基隆氣象站生日快樂🥰</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 投票表單區 -->
-        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-8 border-sky-600" id="vote-section">
-            <h2 class="text-2xl font-bold text-blue-900 mb-2">🎯 預測投票</h2>
-            <form id="voteForm" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">您的暱稱 *</label>
-                        <input type="text" id="userName" required class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：氣象小達人">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">手機號碼 (重複投票以最後 1 次為主) *</label>
-                        <input type="tel" id="userPhone" required pattern="[0-9]{10}" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="例如：0912345678">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-3">選擇 2026年11月11日 00:00-11:00 預測天氣 *</label>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <label class="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                            <input type="radio" name="prediction" value="1.未降雨" required class="mb-2 text-blue-600 focus:ring-blue-500">
-                            <span class="text-2xl mb-1">☀️</span>
-                            <span class="font-bold text-slate-800">1. 未降雨</span>
-                        </label>
-                        <label class="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                            <input type="radio" name="prediction" value="2.降雨" required class="mb-2 text-blue-600 focus:ring-blue-500">
-                            <span class="text-2xl mb-1">🌧️</span>
-                            <span class="font-bold text-slate-800">2. 降雨</span>
-                        </label>
-                        <label class="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                            <input type="radio" name="prediction" value="3.水龍捲" required class="mb-2 text-blue-600 focus:ring-blue-500">
-                            <span class="text-2xl mb-1">🌪️</span>
-                            <span class="font-bold text-slate-800">3. 水龍捲</span>
-                        </label>
-                        <label class="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                            <input type="radio" name="prediction" value="4.下雪" required class="mb-2 text-blue-600 focus:ring-blue-500">
-                            <span class="text-2xl mb-1">❄️️</span>
-                            <span class="font-bold text-slate-800">4. 下雪</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="bg-blue-50 p-4 rounded-xl space-y-2 border border-blue-100">
-                    <p><strong>請預測：</strong>基隆地區及附近海域當天天氣</p>
-                    <p class="text-xs text-blue-800 mt-1">※ 降雨以「基隆氣象站」雨量觀測值 >= 0.5 mm 為準</p>
-                    <p class="text-xs text-blue-800 mt-1">※ 同時發生認定順序：4 > 3 > 2 > 1</p>
-                    <p class="text-xs text-blue-800 mt-1">※ 舉例：指定時間內有降雨，但部分時間未降雨，沒有水龍捲也沒有下雪，則正確答案為 2</p>
-                </div>
-
-                <button type="button" id="preSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 text-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    送出
-                </button>
-            </form>
-        </section>
-
-        <!-- 歷史統計參考 -->
-        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-8 border-indigo-600">
-            <h2 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                歷史統計紀錄參考
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <p class="font-bold text-indigo-900 mb-1">📅 11/11 歷史天氣統計</p>
-                    <p class="font-bold text-indigo-900 mb-1">(1946 ~ 2025 年共 80 次紀錄)</p>
-                    <p class="text-slate-600">▪️未降雨：<strong>33 次</strong></p>
-                    <p class="text-slate-600">▪️降雨：<strong>47 次</strong></p>
-                </div>
-                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <p class="font-bold text-indigo-900 mb-1">🌪️ 歷史水龍捲紀錄</p>
-                    <p class="text-slate-700">▪️2016/11/08 (八斗子潮境公園)</p>
-                    <p class="text-slate-700">▪️2018/07/10 (外木山)</p>
-                    <p class="text-slate-700">▪️2026/09/08 (漏斗雲未觸海)</p>
-                </div>
-                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <p class="font-bold text-indigo-900 mb-1">❄️ 歷史下雪紀錄</p>
-                    <p class="text-slate-700">▪️2016/01/24 (霸王級寒流)</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 獎項介紹區塊 -->
-        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-            <h3 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">🏆 豐富獎項介紹</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center shadow-sm">
-                    <div class="text-2xl mb-1 font-bold text-emerald-800">🎁 參加就有獎 (不限額)</div>
-                    <div class="text-sm font-semibold text-emerald-900 mb-2">(參加此線上投票，同 1 組手機號碼領取 1 件)</div>
-                    <p class="text-xs text-slate-600">凡參加者皆可得 1 件隨機 80 周年紀念小物</p>
-                    <p class="text-xs text-slate-600">(請至基隆氣象站或中央氣象署本部領取)</p>
-                </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center shadow-sm">
-                    <div class="text-2xl mb-1 font-bold text-amber-800">👑 諸葛孔明獎 (1名)</div>
-                    <div class="text-sm font-semibold text-amber-900 mb-2">(太優秀了！現代孔明非您莫屬)</div>
-                    <p class="text-xs text-slate-600">預測對且最早預測之 1 名！可直接獲得 1 份 80 周年紀念禮品</p>
-                </div>
-                <div class="bg-purple-50 border border-purple-200 rounded-xl p-5 text-center shadow-sm">
-                    <div class="text-2xl mb-1 font-bold text-purple-800">✨ 您說的對獎 (8名)</div>
-                    <div class="text-sm font-semibold text-purple-900 mb-2">(您對基隆的氣候很有概念唷！)</div>
-                    <p class="text-xs text-slate-600">預測對之參加者，可獲得 1 次「80 周年紀念禮品」抽獎機會</p>
-                </div>
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-center shadow-sm">
-                    <div class="text-2xl mb-1 font-bold text-emerald-800">🎉 參加加碼獎 (8名)</div>
-                    <div class="text-sm font-semibold text-emerald-900 mb-2">(運氣就落在您身上！)</div>
-                    <p class="text-xs text-slate-600">凡參加者可獲得 1 次「整組 80 周年紀念小物」抽獎機會</p>
-                </div>
-            </div>
-        </section>
-
-            <div class="space-y-4 bg-blue-50 border border-blue-100 p-5 rounded-2xl shadow-sm text-slate-700">
-                <!-- 投票規則備註 -->
-                <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
-                    💡 <strong class="text-blue-950">投票規則及領獎聯絡電話：</strong> 可以重複投票，將以您 <strong class="text-blue-700 font-bold">手機號碼最後 1 次送出的投票</strong> 為準！
-                    凡參加投票的朋友，1 支手機領取 1 件紀念小物，請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <strong class="text-blue-700 font-bold">基隆氣象站 (02-2422-4240)</strong> 或 <strong class="text-blue-700 font-bold">中央氣象署大氣觀測組 (02-2349-1025)</strong> 親自領取唷！
-                </p>
-                <!-- 直播抽獎規則 -->
-                <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
-                    📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
-                    將於基隆氣象站 80 周年站慶活動現場，抽出幸運得獎人（您說的對獎、參加加碼獎），
-                    現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</strong>，將直接開放現場 Call In 遞補！
-                </p>
-            </div>
-        </section>
-
-        <!-- 每週公布獎項照片區 -->
-        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-            <h2 class="text-xl font-bold text-blue-900 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                每週紀念獎項揭曉專區
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center bg-blue-50/50">
-                    <div class="text-3xl font-bold text-blue-800 mb-2">10 / 07</div>
-                    <div class="bg-white aspect-square rounded-lg overflow-hidden flex items-center justify-center shadow-inner mb-2 p-1">
-                        <img src="images/gift-2.jpg" alt="10/07紀念小物" class="w-full h-full object-cover">
-                    </div>
-                    <p class="text-xs text-slate-700 font-bold">紀念小物 A (造型海綿)</p>
-                </div>
-                <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center bg-blue-50/50">
-                    <div class="text-3xl font-bold text-blue-800 mb-2">10 / 14</div>
-                    <div class="bg-white aspect-square rounded-lg overflow-hidden flex items-center justify-center text-6xl shadow-inner mb-2 p-1 text-slate-400 font-bold">❓</div>
-                    <p class="text-xs text-slate-600 font-medium">紀念小物 B (未解鎖)</p>
-                </div>
-                <div class="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center bg-blue-50/50">
-                    <div class="text-3xl font-bold text-blue-800 mb-2">10 / 21</div>
-                    <div class="bg-white aspect-square rounded-lg overflow-hidden flex items-center justify-center text-6xl shadow-inner mb-2 p-1 text-slate-400 font-bold">❓</div>
-                    <p class="text-xs text-slate-600 font-medium">紀念小物 C (未解鎖)</p>
-                </div>
-                <div class="border-2 border-dashed border-amber-300 rounded-xl p-4 text-center bg-amber-50/50">
-                    <div class="text-3xl font-bold text-amber-800 mb-2">10 / 28</div>
-                    <div class="bg-white aspect-square rounded-lg overflow-hidden flex items-center justify-center text-6xl shadow-inner mb-2 p-1 text-slate-400 font-bold">❓</div>
-                    <p class="text-xs text-slate-600 font-medium">紀念禮品 (未解鎖)</p>
-                </div>
-            </div>
-        </section>
-
-
-        <!-- 即時投票人次統計看板 -->
-        <section class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl shadow-xl p-6 flex items-center justify-between">
+    <main class="max-w-6xl mx-auto w-full space-y-6">
+        <!-- 頂部標題區 -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-700 pb-4 gap-4">
             <div>
-                <h3 class="text-lg font-bold text-sky-200">📊 目前活動參與狀況</h3>
-                <p class="text-xs text-slate-300">已有來自各界的好手完成預測投票！</p>
+                <span class="bg-sky-500 text-slate-950 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">管理員專用</span>
+                <h1 class="text-3xl font-bold text-white mt-2">氣象預測投票後台與統計</h1>
+                <p class="text-sm text-slate-400">依時間區間篩選、檢視投票明細與數據圖表分析</p>
             </div>
-            <div class="text-right">
-                <span class="text-xs text-slate-300 block">目前總投票人次</span>
-                <span id="publicTotalCount" class="text-3xl md:text-4xl font-black text-emerald-400">載入中...</span>
+            <div class="flex items-center gap-3">
+                <a href="index.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-sm transition border border-slate-700">查看前台網頁 ↗</a>
+                <button onclick="loadVotes()" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold px-4 py-2 rounded-xl text-sm transition shadow">重新整理數據</button>
             </div>
-        </section>
+        </div>
 
+        <!-- 篩選控制列 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800 p-5 rounded-2xl border border-slate-700 text-sm shadow-lg">
+            <div>
+                <label class="block text-slate-300 mb-1 font-medium">開始時間篩選</label>
+                <input type="datetime-local" id="filterStart" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-sky-500">
+            </div>
+            <div>
+                <label class="block text-slate-300 mb-1 font-medium">結束時間篩選</label>
+                <input type="datetime-local" id="filterEnd" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-sky-500">
+            </div>
+            <div class="flex items-end gap-2">
+                <button onclick="filterVotes()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow">套用時間區間</button>
+                <button onclick="resetFilter()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2.5 rounded-xl transition">重設</button>
+            </div>
+        </div>
+
+        <!-- 統計摘要數字 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
+                <div class="text-xs text-slate-400 font-medium">總投票數量 (提交總次數)</div>
+                <div id="statTotalSubmissions" class="text-3xl font-bold text-sky-400 mt-1">0</div>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
+                <div class="text-xs text-slate-400 font-medium">獨立投票人數 (手機號碼去重)</div>
+                <div id="statUniqueUsers" class="text-3xl font-bold text-emerald-400 mt-1">0</div>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 text-center shadow">
+                <div class="text-xs text-slate-400 font-medium">最多人預測選項 (含同票並列)</div>
+                <div id="statTop" class="text-lg font-bold text-amber-400 mt-2 truncate">-</div>
+            </div>
+        </div>
+
+        <!-- 圖表分析區 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col items-center">
+                <h3 class="text-sm font-bold text-slate-300 mb-4 self-start">📈 各預測選項票數柱狀圖</h3>
+                <div class="w-full h-64 flex items-center justify-center">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col items-center">
+                <h3 class="text-sm font-bold text-slate-300 mb-4 self-start">🥧 各預測選項比例圓餅圖</h3>
+                <div class="w-full h-64 flex items-center justify-center">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 投票明細清單表格 (可切換最近/最初 100 筆) -->
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-700 font-bold text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <span>投票明細記錄列表</span>
+                    <span id="tableCountTip" class="text-xs text-slate-400 font-normal ml-2"></span>
+                </div>
+                <!-- 切換顯示按鈕群組 -->
+                <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700 text-xs">
+                    <button onclick="switchViewMode('recent')" id="btnRecent" class="px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow">最近 100 筆</button>
+                    <button onclick="switchViewMode('oldest')" id="btnOldest" class="px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">最初 100 筆</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900 text-xs uppercase text-slate-400 border-b border-slate-700">
+                        <tr>
+                            <th class="px-6 py-3">投票時間</th>
+                            <th class="px-6 py-3">姓名 / 暱稱</th>
+                            <th class="px-6 py-3">手機號碼</th>
+                            <th class="px-6 py-3">預測天氣選項</th>
+                        </tr>
+                    </thead>
+                    <tbody id="voteTableBody" class="divide-y divide-slate-700/50">
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-500">正在載入投票資料...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
-    <!-- 確認送出彈跳視窗 -->
-    <div id="confirmModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-xl font-bold text-blue-900 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                請確認您的預測內容
-            </h3>
-            <div class="bg-slate-50 p-4 rounded-xl space-y-2 text-sm border border-slate-200">
-                <p><strong>暱稱：</strong> <span id="confirmName" class="text-slate-800"></span></p>
-                <p><strong>手機號碼：</strong> <span id="confirmPhone" class="text-blue-700 font-bold"></span></p>
-                <p><strong>預測天氣：</strong> <span id="confirmPrediction" class="text-slate-800 font-bold"></span></p>
-            </div>
-            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800 leading-relaxed">
-                ⚠️ <strong>手機號碼為領獎及直播 Call Out 之必要訊息，請務必核對正確！填錯將無法領獎</strong>
-            </div>
-            <div class="flex space-x-3 pt-2">
-                <button type="button" id="cancelConfirmBtn" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition">返回修改</button>
-                <button type="button" id="finalSubmitBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">確認送出</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 完成及序號保存彈跳視窗 -->
-    <div id="successModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-center">
-            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl font-bold">✓</div>
-            <h3 class="text-2xl font-bold text-blue-900">投票登錄成功！</h3>
-            
-            <div id="resultCardArea" class="bg-blue-50 border-2 border-dashed border-blue-300 p-4 rounded-2xl space-y-2 text-left text-sm">
-                <div class="text-center pb-2 border-b border-blue-200">
-                    <span class="text-xs text-blue-600 block">您的專屬序號</span>
-                    <span id="resultSerial" class="text-2xl font-black text-blue-950 tracking-wider">KL80-Loading...</span>
-                </div>
-                <p><strong>暱稱：</strong> <span id="resultName"></span></p>
-                <p><strong>手機號碼：</strong> <span id="resultPhone"></span></p>
-                <p><strong>投票時間：</strong> <span id="resultTime"></span></p>
-                <p><strong>預測天氣：</strong> <span id="resultPrediction"></span></p>
-            </div>
-
-            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-sm text-amber-900 leading-relaxed text-left">
-                📸 <strong>點擊下方按鈕，留存投票紀錄或分享給好友！</strong>
-            </div>
-
-            <!-- 功能按鈕區塊 -->
-            <div class="grid grid-cols-2 gap-2">
-                <button type="button" id="copyInfoBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
-                    <span>📋</span><span>複製資訊</span>
-                </button>
-                <button type="button" id="saveImageBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
-                    <span>🖼️</span><span>存檔圖片</span>
-                </button>
-                <button type="button" id="shareLineBtn" class="bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
-                    <span>💚</span><span>分享 LINE</span>
-                </button>
-                <button type="button" id="shareFbBtn" class="bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
-                    <span>💙</span><span>分享 FB</span>
-                </button>
-            </div>
-            
-            <button type="button" id="closeSuccessBtn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition shadow-sm text-xs mt-2">
-                關閉視窗
-            </button>
-        </div>
-    </div>
-
-    <!-- 彈出式通知 (Toast Notification) -->
-    <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 flex items-center bg-white shadow-2xl border-l-4 rounded-xl px-6 py-4 max-w-sm">
-        <div id="toastIcon" class="text-2xl mr-3">🎉</div>
-        <div>
-            <h4 id="toastTitle" class="font-bold text-slate-900 text-sm">投票成功</h4>
-            <p id="toastDesc" class="text-xs text-slate-600">您的預測已經順利登錄！</p>
-        </div>
-    </div>
-
     <!-- 頁尾 -->
-    <footer class="bg-slate-900 text-slate-400 text-center py-6 mt-12 text-sm border-t border-slate-800">
-        <p>主辦單位保留隨時修正、暫停、終止或解釋本活動之權利</p>
-        <p>基隆氣象站建站 80 周年紀念活動 © 2026 All Rights Reserved.</p>
+    <footer class="text-center text-slate-500 text-xs py-8 mt-12 border-t border-slate-800">
+        <p>基隆氣象站建站 80 周年紀念活動後台管理系統 © 2026</p>
     </footer>
 
-<!-- 前台投票邏輯與通知控制 -->
+<!-- 後台資料載入、圖表與篩選邏輯 -->
     <script>
-        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; // 請換成您的 Apps Script 網址
+        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
-        function showToast(title, desc = '') {
-            const toast = document.getElementById('toastNotification');
-            const icon = document.getElementById('toastIcon');
-            const titleEl = document.getElementById('toastTitle');
-            const descEl = document.getElementById('toastDesc');
+        let globalData = [];
+        let currentViewMode = 'recent'; 
+        let barChartInstance = null;
+        let pieChartInstance = null;
 
-            titleEl.innerText = title;
-            descEl.innerText = desc;
-
-            toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 flex items-center bg-white shadow-2xl border-l-4 border-emerald-500 rounded-xl px-6 py-4 max-w-sm transition-all duration-300";
-            icon.innerText = "🎉";
-
-            setTimeout(() => {
-                toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 flex items-center bg-white shadow-2xl border-l-4 rounded-xl px-6 py-4 max-w-sm transition-all duration-300";
-            }, 4000);
-        }
-
-        // 讀取目前總投票人次
-        async function fetchPublicTotal() {
-            if (!GOOGLE_SHEET_API_URL) return;
-            try {
-                const response = await fetch(GOOGLE_SHEET_API_URL);
-                const data = await response.json();
-                const count = (data && Array.isArray(data) && data.length > 1) ? data.length - 1 : 0;
-                document.getElementById('publicTotalCount').innerText = count;
-            } catch (e) {
-                document.getElementById('publicTotalCount').innerText = "0";
-            }
-        }
-
-        let currentFormData = {};
-
-        document.getElementById('preSubmitBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('userName');
-            const phoneInput = document.getElementById('userPhone');
-            const radioInput = document.querySelector('input[name="prediction"]:checked');
-
-            if (!nameInput.value.trim() || !phoneInput.value.trim() || !radioInput) {
-                alert('請完整填寫暱稱、手機號碼並選擇預測天氣！');
-                return;
-            }
-
-            if (!/^[0-9]{10}$/.test(phoneInput.value.trim())) {
-                alert('請輸入正確的 10 碼手機號碼（例如：0912345678）！');
-                return;
-            }
-
-            currentFormData = {
-                name: nameInput.value.trim(),
-                phone: phoneInput.value.trim(),
-                prediction: radioInput.value
-            };
-
-            document.getElementById('confirmName').innerText = currentFormData.name;
-            document.getElementById('confirmPhone').innerText = currentFormData.phone;
-            document.getElementById('confirmPrediction').innerText = currentFormData.prediction;
-
-            document.getElementById('confirmModal').classList.remove('hidden');
-        });
-
-        document.getElementById('cancelConfirmBtn').addEventListener('click', function() {
-            document.getElementById('confirmModal').classList.add('hidden');
-        });
-
-        // 確認送出：直接發送 POST 請求寫入（大幅提升速度）
-        document.getElementById('finalSubmitBtn').addEventListener('click', async function() {
-            document.getElementById('confirmModal').classList.add('hidden');
-            
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-            currentFormData.time = formattedTime;
-
-            const finalBtn = document.getElementById('preSubmitBtn');
-            finalBtn.disabled = true;
-            finalBtn.innerText = "正在傳送預測投票...";
-
-            let generatedSerial = "KL80-Processing...";
-
+        async function loadVotes() {
+            let rawData = [];
             if (GOOGLE_SHEET_API_URL) {
                 try {
-                    // 使用標準 POST 傳送，並由後端回傳正確流水號 (若後端用 JSON 需支援，此處改用預測或同步取號。為求最快，我們直接fetch並用時間戳或本地預估，或使用標準fetch看後端能不能帶回)
-                    // 若後端有修改成回傳 JSON，可直接解析；若維持 no-cors，我們用前端暫定流水號，或透過後端寫入。
-                    // 為了最穩最快，我們用以下方式發送：
-                    await fetch(GOOGLE_SHEET_API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(currentFormData)
-                    });
-                } catch (error) {
-                    console.error(error);
+                    const response = await fetch(GOOGLE_SHEET_API_URL);
+                    rawData = await response.json();
+                } catch (e) {
+                    console.error("無法讀取 Google Sheets", e);
+                    rawData = [];
                 }
             }
-
-            // 畫面先顯示暫定序號，並在 2 秒後同步更新抓取實際總數來當作序號
-            generatedSerial = "KL80-已成功登錄";
-            currentFormData.serialNumber = generatedSerial;
-
-            document.getElementById('resultSerial').innerText = "投票完成！";
-            document.getElementById('resultName').innerText = currentFormData.name;
-            document.getElementById('resultPhone').innerText = currentFormData.phone;
-            document.getElementById('resultPrediction').innerText = currentFormData.prediction;
-            document.getElementById('resultTime').innerText = formattedTime;
-            document.getElementById('successModal').classList.remove('hidden');
-
-            document.getElementById('voteForm').reset();
-            finalBtn.disabled = false;
-            finalBtn.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 送出`;
             
-            setTimeout(fetchPublicTotal, 2000);
-        });
-
-        // 手機相容的複製投票資訊
-        document.getElementById('copyInfoBtn').addEventListener('click', function() {
-            const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}\n快來一起參加基隆氣象站 80 週年慶投票抽大獎！`;
-            
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(safeText).then(() => {
-                    showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
-                }).catch(() => {
-                    fallbackCopyText(safeText);
-                });
+            // 自動判斷並相容「二維陣列」或「物件陣列」
+            if (Array.isArray(rawData) && rawData.length > 0) {
+                if (Array.isArray(rawData[0])) {
+                    // 狀況 A：後端回傳的是二維陣列 [ [標題1, 標題2...], [值1, 值2...] ]
+                    // 第一列是標題，從第二列開始讀取
+                    globalData = rawData.slice(1).map(row => ({
+                        serialNumber: row[0] || '',
+                        time: row[1] || new Date().toISOString(),
+                        name: row[2] !== undefined ? row[2] : '',
+                        phone: String(row[3] !== undefined ? row[3] : '').trim(),
+                        prediction: row[4] || ''
+                    }));
+                } else {
+                    // 狀況 B：後端回傳的是物件陣列 [ { 欄位名: 值 }, ... ]
+                    globalData = rawData.map(v => ({
+                        serialNumber: v["序號 (Serialnumber)"] || v.serialNumber || '',
+                        time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
+                        name: v["姓名 (Name)"] !== undefined ? v["姓名 (Name)"] : (v.name || v.姓名 || ''),
+                        phone: String(v["手機號碼 (Phone)"] !== undefined ? v["手機號碼 (Phone)"] : (v.phone || v.手機號碼 || '')).trim(),
+                        prediction: v["預測天氣選項 (Prediction)"] || v.prediction || v.預測天氣選項 || ''
+                    }));
+                }
             } else {
-                fallbackCopyText(safeText);
+                globalData = [];
             }
-        });
 
-        function fallbackCopyText(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
-            } catch (err) {
-                alert("複製失敗，請手動長按文字複製。");
-            }
-            document.body.removeChild(textArea);
+            renderStatsAndTable(globalData);
         }
 
-        // 手機友善的存檔圖片按鈕功能 (改為另開圖片或長按儲存，避免被手機瀏覽器直接攔截)
-        document.getElementById('saveImageBtn').addEventListener('click', function() {
-            const cardArea = document.getElementById('resultCardArea');
-            html2canvas(cardArea, { scale: 2 }).then(canvas => {
-                const imageUrl = canvas.toDataURL('image/png');
-                
-                // 針對手機建立一個新視窗或彈出預覽，讓使用者可以「長按圖片儲存」
-                const newWindow = window.open();
-                if (newWindow) {
-                    newWindow.document.write(`
-                        <html>
-                            <head><title>儲存投票憑證</title></head>
-                            <body style="text-align:center; background:#f0f4f8; padding:20px; font-family:sans-serif;">
-                                <h3>請長按下方圖片將憑證存入手機相簿</h3>
-                                <img src="${imageUrl}" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
-                                <p style="color:#666; font-size:14px; margin-top:15px;">(手機版請直接長按圖片選擇「加入相簿」或「儲存圖片」)</p>
-                            </body>
-                        </html>
-                    `);
-                    showToast("請長按圖片儲存", "已為您產生憑證圖片分頁。");
-                } else {
-                    // 備用下載機制
-                    const link = document.createElement('a');
-                    link.download = `基隆氣象站80週年投票憑證.png`;
-                    link.href = imageUrl;
-                    link.click();
-                    showToast("圖片已產生！", "請檢查您的下載資料夾。");
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            const btnRecent = document.getElementById('btnRecent');
+            const btnOldest = document.getElementById('btnOldest');
+
+            if (mode === 'recent') {
+                btnRecent.className = "px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnOldest.className = "px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+            } else {
+                btnOldest.className = "px-3 py-1.5 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnRecent.className = "px-3 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white";
+            }
+
+            filterVotes();
+        }
+
+        function renderStatsAndTable(data) {
+            const tbody = document.getElementById('voteTableBody');
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">目前尚無任何投票資料</td></tr>`;
+                document.getElementById('statTotalSubmissions').innerText = '0';
+                document.getElementById('statUniqueUsers').innerText = '0';
+                document.getElementById('statTop').innerText = '-';
+                updateCharts({ '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 });
+                document.getElementById('tableCountTip').innerText = '';
+                return;
+            }
+
+            // 1. 總投票數量
+            const totalSubmissions = data.length;
+            document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
+
+            // 2. 獨立投票人數 (手機號碼去重)
+            const uniquePhones = new Set(data.map(v => v.phone).filter(p => p !== ''));
+            document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
+
+            // 3. 各選項統計
+            let counts = { '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
+            data.forEach(v => {
+                let opt = String(v.prediction);
+                if (opt.includes('未')) opt = '1.未降雨';
+                else if (opt.includes('雨')) opt = '2.降雨';
+                else if (opt.includes('水龍')) opt = '3.水龍捲';
+                else if (opt.includes('雪')) opt = '4.下雪';
+
+                if (counts[opt] !== undefined) {
+                    counts[opt]++;
                 }
-            }).catch(err => {
-                console.error(err);
-                alert("圖片產生失敗，請直接使用手機截圖畫面。");
             });
-        });
 
-        // 豐富內容的分享到 LINE
-        document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：${currentFormData.prediction}\n⏰ 投票時間：${currentFormData.time}\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
-            const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
-            window.open(lineUrl, '_blank');
-        });
+            // 4. 最多人預測選項（支援同票並列顯示）
+            let maxCount = -1;
+            let topOpts = [];
+            for (let opt in counts) {
+                if (counts[opt] > maxCount) {
+                    maxCount = counts[opt];
+                    topOpts = [opt];
+                } else if (counts[opt] === maxCount && maxCount > 0) {
+                    topOpts.push(opt);
+                }
+            }
+            
+            let topText = '-';
+            if (maxCount > 0) {
+                topText = topOpts.join('、') + ` (${maxCount}票)`;
+            }
+            document.getElementById('statTop').innerText = topText;
 
-        // 豐富內容的分享到 Facebook
-        document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const shareText = `我剛剛參加了「基隆氣象站建站 80 周年：雨港海韻·氣象八十」天氣預測投票，預測結果是「${currentFormData.prediction}」！大家快來一起預測拿大獎！`;
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(shareText)}`;
-            window.open(fbUrl, '_blank');
-        });
+            // 更新圖表
+            updateCharts(counts);
 
-        document.getElementById('closeSuccessBtn').addEventListener('click', function() {
-            document.getElementById('successModal').classList.add('hidden');
-            showToast("投票已完成！", "您的預測已經順利登錄！");
-        });
+            // 5. 處理列表顯示：最近100筆或最初100筆
+            let displayData = [];
+            if (currentViewMode === 'recent') {
+                displayData = [...data].reverse().slice(0, 100);
+                document.getElementById('tableCountTip').innerText = `（顯示最近 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+            } else {
+                displayData = [...data].slice(0, 100);
+                document.getElementById('tableCountTip').innerText = `（顯示最初 ${displayData.length} 筆，共 ${totalSubmissions} 筆）`;
+            }
 
-        window.onload = function() {
-            fetchPublicTotal();
-        };
+            displayData.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/30 transition";
+                const formattedTime = v.time ? new Date(v.time).toLocaleString() : '剛剛';
+
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 text-slate-400 text-xs">
+                        <div class="text-sky-400 font-mono font-bold">${v.serialNumber || ''}</div>
+                        <div class="text-slate-400">${formattedTime}</div>
+                    </td>
+                    <td class="px-6 py-3.5 font-medium text-white">${v.name}</td>
+                    <td class="px-6 py-3.5 font-mono text-slate-300">${v.phone}</td>
+                    <td class="px-6 py-3.5"><span class="bg-sky-950 text-sky-300 border border-sky-800/50 px-3 py-1 rounded-full text-xs font-semibold">${v.prediction}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateCharts(counts) {
+            const labels = ['1.未降雨', '2.降雨', '3.水龍捲', '4.下雪'];
+            const values = [counts['1.未降雨'], counts['2.降雨'], counts['3.水龍捲'], counts['4.下雪']];
+            const backgroundColors = ['#f59e0b', '#3b82f6', '#a855f7', '#06b6d4'];
+
+            if (barChartInstance) barChartInstance.destroy();
+            if (pieChartInstance) pieChartInstance.destroy();
+
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '票數',
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 0,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', precision: 0 } }
+                    }
+                }
+            });
+
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChartInstance = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#f8fafc', boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        function filterVotes() {
+            const startVal = document.getElementById('filterStart').value;
+            const endVal = document.getElementById('filterEnd').value;
+            
+            let filtered = [...globalData];
+
+            if (startVal || endVal) {
+                const startTime = startVal ? new Date(startVal).getTime() : 0;
+                const endTime = endVal ? new Date(endVal).getTime() : Date.now();
+                filtered = filtered.filter(v => {
+                    const t = new Date(v.time).getTime();
+                    return t >= startTime && t <= endTime;
+                });
+            }
+            renderStatsAndTable(filtered);
+        }
+
+        function resetFilter() {
+            document.getElementById('filterStart').value = '';
+            document.getElementById('filterEnd').value = '';
+            renderStatsAndTable(globalData);
+        }
+
+        window.onload = loadVotes;
     </script>
 </body>
 </html>
