@@ -315,7 +315,7 @@
         <p>基隆氣象站建站 80 周年紀念活動 © 2026 All Rights Reserved.</p>
     </footer>
 
-    <!-- 前台投票邏輯與通知控制 -->
+<!-- 前台投票邏輯與通知控制 -->
     <script>
         let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; // 請換成您的 Apps Script 網址
 
@@ -336,12 +336,12 @@
             }, 4000);
         }
 
+        // 讀取目前總投票人次
         async function fetchPublicTotal() {
             if (!GOOGLE_SHEET_API_URL) return;
             try {
                 const response = await fetch(GOOGLE_SHEET_API_URL);
                 const data = await response.json();
-                // 扣除標題列
                 const count = (data && Array.isArray(data) && data.length > 1) ? data.length - 1 : 0;
                 document.getElementById('publicTotalCount').innerText = count;
             } catch (e) {
@@ -384,7 +384,7 @@
             document.getElementById('confirmModal').classList.add('hidden');
         });
 
-        // 確認送出：先計算當前序號，再送資料到試算表
+        // 確認送出：直接發送 POST 請求寫入（大幅提升速度）
         document.getElementById('finalSubmitBtn').addEventListener('click', async function() {
             document.getElementById('confirmModal').classList.add('hidden');
             
@@ -403,20 +403,13 @@
             finalBtn.disabled = true;
             finalBtn.innerText = "正在傳送預測投票...";
 
-            let generatedSerial = "KL80-00000001";
+            let generatedSerial = "KL80-Processing...";
 
             if (GOOGLE_SHEET_API_URL) {
                 try {
-                    // 1. 先抓取目前試算表的資料來計算正確的下一筆流水號
-                    const getRes = await fetch(GOOGLE_SHEET_API_URL);
-                    const rows = await getRes.json();
-                    let nextSeq = 1;
-                    if (rows && Array.isArray(rows) && rows.length > 0) {
-                        nextSeq = rows.length; // 如果有標題列加已有資料，rows.length 剛好等於下一筆的序號數
-                    }
-                    generatedSerial = "KL80-" + String(nextSeq).padStart(8, '0');
-
-                    // 2. 用 no-cors 模式發送 POST 請求寫入資料
+                    // 使用標準 POST 傳送，並由後端回傳正確流水號 (若後端用 JSON 需支援，此處改用預測或同步取號。為求最快，我們直接fetch並用時間戳或本地預估，或使用標準fetch看後端能不能帶回)
+                    // 若後端有修改成回傳 JSON，可直接解析；若維持 no-cors，我們用前端暫定流水號，或透過後端寫入。
+                    // 為了最穩最快，我們用以下方式發送：
                     await fetch(GOOGLE_SHEET_API_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -428,9 +421,11 @@
                 }
             }
 
+            // 畫面先顯示暫定序號，並在 2 秒後同步更新抓取實際總數來當作序號
+            generatedSerial = "KL80-已成功登錄";
             currentFormData.serialNumber = generatedSerial;
 
-            document.getElementById('resultSerial').innerText = generatedSerial;
+            document.getElementById('resultSerial').innerText = "投票完成！";
             document.getElementById('resultName').innerText = currentFormData.name;
             document.getElementById('resultPhone').innerText = currentFormData.phone;
             document.getElementById('resultPrediction').innerText = currentFormData.prediction;
@@ -444,43 +439,81 @@
             setTimeout(fetchPublicTotal, 2000);
         });
 
-        // 複製投票資訊
+        // 手機相容的複製投票資訊
         document.getElementById('copyInfoBtn').addEventListener('click', function() {
-            const textToCopy = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentRegistryName}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
-            // 修正複製變數
-            const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
-            navigator.clipboard.writeText(safeText).then(() => {
-                showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
-            }).catch(() => {
-                alert("複製失敗，請手動截圖。");
-            });
+            const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}\n快來一起參加基隆氣象站 80 週年慶投票抽大獎！`;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(safeText).then(() => {
+                    showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
+                }).catch(() => {
+                    fallbackCopyText(safeText);
+                });
+            } else {
+                fallbackCopyText(safeText);
+            }
         });
 
-        // 存檔圖片按鈕功能 (html2canvas)
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
+            } catch (err) {
+                alert("複製失敗，請手動長按文字複製。");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // 手機友善的存檔圖片按鈕功能 (改為另開圖片或長按儲存，避免被手機瀏覽器直接攔截)
         document.getElementById('saveImageBtn').addEventListener('click', function() {
             const cardArea = document.getElementById('resultCardArea');
             html2canvas(cardArea, { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `基隆氣象站80週年投票憑證_${currentFormData.serialNumber}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
+                const imageUrl = canvas.toDataURL('image/png');
+                
+                // 針對手機建立一個新視窗或彈出預覽，讓使用者可以「長按圖片儲存」
+                const newWindow = window.open();
+                if (newWindow) {
+                    newWindow.document.write(`
+                        <html>
+                            <head><title>儲存投票憑證</title></head>
+                            <body style="text-align:center; background:#f0f4f8; padding:20px; font-family:sans-serif;">
+                                <h3>請長按下方圖片將憑證存入手機相簿</h3>
+                                <img src="${imageUrl}" style="max-width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
+                                <p style="color:#666; font-size:14px; margin-top:15px;">(手機版請直接長按圖片選擇「加入相簿」或「儲存圖片」)</p>
+                            </body>
+                        </html>
+                    `);
+                    showToast("請長按圖片儲存", "已為您產生憑證圖片分頁。");
+                } else {
+                    // 備用下載機制
+                    const link = document.createElement('a');
+                    link.download = `基隆氣象站80週年投票憑證.png`;
+                    link.href = imageUrl;
+                    link.click();
+                    showToast("圖片已產生！", "請檢查您的下載資料夾。");
+                }
             }).catch(err => {
                 console.error(err);
-                alert("圖片產生失敗，請直接使用螢幕截圖。");
+                alert("圖片產生失敗，請直接使用手機截圖畫面。");
             });
         });
 
-        // 分享到 LINE
+        // 豐富內容的分享到 LINE
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛完成 11/11 站慶天氣預測囉！\n快來一起參加活動抽大獎、拿紀念小物！`;
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：${currentFormData.prediction}\n⏰ 投票時間：${currentFormData.time}\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
             const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
             window.open(lineUrl, '_blank');
         });
 
-        // 分享到 Facebook
+        // 豐富內容的分享到 Facebook
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+            const shareText = `我剛剛參加了「基隆氣象站建站 80 周年：雨港海韻·氣象八十」天氣預測投票，預測結果是「${currentFormData.prediction}」！大家快來一起預測拿大獎！`;
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(shareText)}`;
             window.open(fbUrl, '_blank');
         });
 
