@@ -176,13 +176,13 @@
             <!-- 投票規則備註 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 💡 <strong class="text-blue-950">投票規則及領獎聯絡電話：</strong> 可以重複投票，將以您 <strong class="text-blue-700 font-bold">手機號碼最後 1 次送出的投票</strong> 為準！
-                凡參加投票的朋友，1 支手機領取 1 件紀念小物，請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <strong class="text-blue-700 font-bold">基隆氣象站 (02-2422-4240)</strong> 或 <strong class="text-blue-700 font-bold">中央氣象署大氣觀測組 (02-2349-1025)</strong> 親自領取唷！
+                「參加就有獎」請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <strong class="text-blue-700 font-bold">基隆氣象站 (02-2422-4240)</strong> 或 <strong class="text-blue-700 font-bold">中央氣象署大氣觀測組 (02-2349-1025)</strong> 親自領取唷！
             </p>
             <!-- 直播抽獎規則 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
-                將於基隆氣象站 80 周年站慶活動現場，抽出幸運得獎人（您說的對獎、參加加碼獎），
-                現場會直接撥打電話給得獎人，請務必留意手機鈴聲！若撥打 <strong class="text-amber-600 font-bold">響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</strong>，將直接開放現場 Call In 遞補！
+                將於基隆氣象站 80 周年站慶活動現場，抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
+                現場會直接撥打電話給得獎人， <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！若撥打響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽，將直接開放現場 Call In 遞補！
             </p>
         </div>
 
@@ -441,7 +441,7 @@
         document.getElementById('copyInfoBtn').addEventListener('click', function() {
             const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
             navigator.clipboard.writeText(safeText).then(() => {
-                showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
+                showToast("複製成功！", "已將預測資訊複製到剪貼簿。");
             }).catch(() => {
                 alert("複製失敗，請手動截圖。");
             });
@@ -453,14 +453,14 @@
             try {
                 const canvas = await html2canvas(cardArea, { scale: 2 });
                 canvas.toBlob(async (blob) => {
-                    const file = new File([blob], `基隆氣象站80週年預測憑證_${currentFormData.serialNumber}.png`, { type: 'image/png' });
+                    const file = new File([blob], `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`, { type: 'image/png' });
                     
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
-                                title: '基隆氣象站 80 週年投票憑證',
-                                text: '這是我的基隆氣象站 80 週年天氣預測憑證！'
+                                title: '基隆氣象站 80 週年天氣預測投票憑證',
+                                text: '這是我的基隆氣象站 80 週年天氣預測投票憑證！'
                             });
                             return;
                         } catch (err) {
@@ -469,7 +469,7 @@
                     }
 
                     const link = document.createElement('a');
-                    link.download = `基隆氣象站80週年預測憑證_${currentFormData.serialNumber}.png`;
+                    link.download = `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.click();
                     showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
@@ -518,16 +518,17 @@
 
         // ===== 分享到 Facebook =====
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
-            const url = getPageUrl();
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\nhttps://shys31922.github.io/Keelung80PredictionGame/?t=1111`;
             
-            const copied = legacyCopy(shareText + '\n' + url);
+            // 自動複製包含網址的完整文案至剪貼簿
+            const copied = legacyCopy(shareText);
             if (copied) {
-                showToast("文案已複製！", "進入 Facebook 後直接貼上即可。");
+                showToast("文案已複製！", "Facebook 貼文內容已複製，直接貼上即可發文。");
             }
             
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-            const w = window.open(fbUrl, '_blank', 'width=600,height=400');
+            // 開啟 Facebook 主頁讓使用者直接發文
+            const fbUrl = `https://www.facebook.com/`;
+            const w = window.open(fbUrl, '_blank');
             if (!w) {
                 window.location.href = fbUrl;
             }
