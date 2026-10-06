@@ -437,23 +437,29 @@
             }
         });
 
-        // 3. & 5. 分享到 LINE (使用固定網址，且不含時間)
+const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
+
+        // 分享到 LINE（純跳轉，帶入預設文字與固定網址）
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛完成 11/11 站慶天氣預測囉！\n我的預測：${currentFormData.prediction}\n快來一起參加活動抽大獎！`;
-            const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(FIXED_SHARE_URL)}`;
+            const shareText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測囉！我的預測：${currentFormData.prediction}\n快來一起參加活動抽大獎！\n${FIXED_SHARE_URL}`;
+            
+            const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`;
             window.open(lineUrl, '_blank');
         });
 
-        // 4. & 5. 分享到 Facebook (使用固定網址，不含時間，自動複製純文字避免縮圖困擾)
+        // 分享到 Facebook（純跳轉，同時帶入預設文字 quote 與固定網址）
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測了！我的預測是：${currentFormData.prediction} ☀️🌧️\n快來一起參加活動拿好禮：${FIXED_SHARE_URL}`;
+            // 準備要帶入的預設文字
+            const quoteText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測了！我的預測是：${currentFormData.prediction} ☀️🌧️\n快來一起參加活動拿好禮！`;
             
-            // 同步複製文字到剪貼簿，方便用戶直接貼上純文字分享
-            navigator.clipboard.writeText(shareText);
-
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(FIXED_SHARE_URL)}`;
-            window.open(fbUrl, '_blank');
-            showToast("已複製分享文字！", "貼上至貼文即可發布。");
+            // 結合固定網址與引言參數
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(FIXED_SHARE_URL)}&quote=${encodeURIComponent(quoteText)}`;
+            
+            const width = 600;
+            const height = 400;
+            const left = (window.innerWidth - width) / 2;
+            const top = (window.innerHeight - height) / 2;
+            window.open(fbUrl, 'facebook-share-dialog', `width=${width},height=${height},top=${top},left=${left}`);
         });
 
         document.getElementById('closeSuccessBtn').addEventListener('click', function() {
