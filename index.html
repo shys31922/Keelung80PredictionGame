@@ -315,7 +315,6 @@
     <!-- 前台投票邏輯與通知控制 -->
     <script>
         const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
-        const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
         let currentFormData = {};
 
         function showToast(title, desc = '') {
@@ -481,23 +480,57 @@
             }
         });
 
-        // 分享到 LINE
+        // ===== 分享相關設定與邏輯 =====
+        function getPageUrl() {
+            return "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
+        }
+
+        function legacyCopy(text) {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return successful;
+            } catch (err) {
+                document.body.removeChild(textarea);
+                return false;
+            }
+        }
+
+        const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // ===== 分享到 LINE =====
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測囉！我的預測：${currentFormData.prediction}\n快來一起參加活動抽大獎！\n${FIXED_SHARE_URL}`;
-            const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(shareText)}`;
-            window.open(lineUrl, '_blank');
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
+            const url = getPageUrl();
+            if (IS_MOBILE) {
+                window.location.href = 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText + '\n' + url);
+            } else {
+                const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
+                window.open(lineUrl, '_blank');
+            }
         });
 
-        // 分享到 Facebook
+        // ===== 分享到 Facebook =====
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const quoteText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測了！我的預測是：${currentFormData.prediction} ☀️🌧️\n快來一起參加活動拿好禮！`;
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(FIXED_SHARE_URL)}&quote=${encodeURIComponent(quoteText)}`;
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
+            const url = getPageUrl();
             
-            const width = 600;
-            const height = 400;
-            const left = (window.innerWidth - width) / 2;
-            const top = (window.innerHeight - height) / 2;
-            window.open(fbUrl, 'facebook-share-dialog', `width=${width},height=${height},top=${top},left=${left}`);
+            const copied = legacyCopy(shareText + '\n' + url);
+            if (copied) {
+                showToast("文案已複製！", "進入 Facebook 後直接貼上即可。");
+            }
+            
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            const w = window.open(fbUrl, '_blank', 'width=600,height=400');
+            if (!w) {
+                window.location.href = fbUrl;
+            }
         });
 
         document.getElementById('closeSuccessBtn').addEventListener('click', function() {
