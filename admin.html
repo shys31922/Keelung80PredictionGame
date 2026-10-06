@@ -122,7 +122,7 @@
         <p>基隆氣象站建站 80 周年紀念活動後台管理系統 © 2026</p>
     </footer>
 
-    <!-- 後台資料載入、圖表與篩選邏輯 -->
+<!-- 後台資料載入、圖表與篩選邏輯 -->
     <script>
         let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
@@ -132,25 +132,42 @@
         let pieChartInstance = null;
 
         async function loadVotes() {
-            let data = [];
+            let rawData = [];
             if (GOOGLE_SHEET_API_URL) {
                 try {
                     const response = await fetch(GOOGLE_SHEET_API_URL);
-                    data = await response.json();
+                    rawData = await response.json();
                 } catch (e) {
                     console.error("無法讀取 Google Sheets", e);
-                    data = [];
+                    rawData = [];
                 }
             }
             
-            // 完美對應包含英文括號的新欄位名稱與舊欄位名稱相容性
-            globalData = data.map(v => ({
-                serialNumber: v["序號 (Serialnumber)"] || v.serialNumber || '',
-                time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
-                name: v["姓名 (Name)"] !== undefined ? v["姓名 (Name)"] : (v.name || v.姓名 || ''),
-                phone: String(v["手機號碼 (Phone)"] !== undefined ? v["手機號碼 (Phone)"] : (v.phone || v.手機號碼 || '')).trim(),
-                prediction: v["預測天氣選項 (Prediction)"] || v.prediction || v.預測天氣選項 || ''
-            }));
+            // 自動判斷並相容「二維陣列」或「物件陣列」
+            if (Array.isArray(rawData) && rawData.length > 0) {
+                if (Array.isArray(rawData[0])) {
+                    // 狀況 A：後端回傳的是二維陣列 [ [標題1, 標題2...], [值1, 值2...] ]
+                    // 第一列是標題，從第二列開始讀取
+                    globalData = rawData.slice(1).map(row => ({
+                        serialNumber: row[0] || '',
+                        time: row[1] || new Date().toISOString(),
+                        name: row[2] !== undefined ? row[2] : '',
+                        phone: String(row[3] !== undefined ? row[3] : '').trim(),
+                        prediction: row[4] || ''
+                    }));
+                } else {
+                    // 狀況 B：後端回傳的是物件陣列 [ { 欄位名: 值 }, ... ]
+                    globalData = rawData.map(v => ({
+                        serialNumber: v["序號 (Serialnumber)"] || v.serialNumber || '',
+                        time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
+                        name: v["姓名 (Name)"] !== undefined ? v["姓名 (Name)"] : (v.name || v.姓名 || ''),
+                        phone: String(v["手機號碼 (Phone)"] !== undefined ? v["手機號碼 (Phone)"] : (v.phone || v.手機號碼 || '')).trim(),
+                        prediction: v["預測天氣選項 (Prediction)"] || v.prediction || v.預測天氣選項 || ''
+                    }));
+                }
+            } else {
+                globalData = [];
+            }
 
             renderStatsAndTable(globalData);
         }
