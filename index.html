@@ -341,8 +341,7 @@
             try {
                 const response = await fetch(GOOGLE_SHEET_API_URL);
                 const data = await response.json();
-                const count = (data && Array.isArray(data) && data.length > 1) ? data.length - 1 : 0;
-                document.getElementById('publicTotalCount').innerText = count;
+                document.getElementById('publicTotalCount').innerText = data.count ?? 0;
             } catch (e) {
                 console.error("無法取得投票人次", e);
                 document.getElementById('publicTotalCount').innerText = "0";
@@ -400,27 +399,23 @@
             finalBtn.disabled = true;
             finalBtn.innerText = "正在傳送您的預測...投票踴躍請耐心等候";
 
-            let generatedSerial = "KL80-00000001";
-
-            if (GOOGLE_SHEET_API_URL) {
-                try {
-                    const getRes = await fetch(GOOGLE_SHEET_API_URL);
-                    const rows = await getRes.json();
-                    let nextSeq = 1;
-                    if (rows && Array.isArray(rows) && rows.length > 0) {
-                        nextSeq = rows.length;
-                    }
-                    generatedSerial = "KL80-" + String(nextSeq).padStart(8, '0');
-
-                    await fetch(GOOGLE_SHEET_API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(currentFormData)
-                    });
-                } catch (error) {
-                    console.error("送出表單發生錯誤", error);
-                }
+            let generatedSerial = "";
+            
+            try {
+                const res = await fetch(GOOGLE_SHEET_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(currentFormData)
+                });
+                const result = await res.json();
+                if (!result.ok) throw new Error(result.error || 'server error');
+                generatedSerial = result.serial;
+            } catch (error) {
+                console.error("送出表單發生錯誤", error);
+                alert("目前連線忙碌，無法確認是否送出成功，請稍後再按 1 次送出（可重複投票，以最後 1 次為準）");
+                finalBtn.disabled = false;
+                finalBtn.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 送出`;
+                return;
             }
 
             currentFormData.serialNumber = generatedSerial;
