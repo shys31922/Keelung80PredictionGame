@@ -4,17 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>基隆氣象站建站 80 周年：雨港海韻·氣象八十 - 天氣預測投票</title>
-    
-    <!-- 💡 強制宣告：禁止任何爬蟲抓取頁面圖片當作預覽縮圖 -->
-    <meta name="robots" content="noimageindex">
-    
-    <!-- 💡 Facebook Open Graph 標籤：明確給一個空圖片，封鎖自動抓圖 -->
-    <meta property="og:title" content="基隆氣象站建站 80 周年：雨港海韻·氣象八十 - 天氣預測投票">
-    <meta property="og:description" content="參與 11/11 站慶天氣預測抽大獎！">
-    <meta property="og:url" content="https://shys31922.github.io/Keelung80PredictionGame/?t=1111">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="">
-
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- html2canvas 用於存檔圖片 -->
@@ -31,7 +20,7 @@
         }
         .bg-watercolor {
             background: linear-gradient(135deg, rgba(240,244,248,0.9) 0%, rgba(203,220,237,0.95) 100%), 
-                url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80');
+                        url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80');
             background-blend-mode: overlay;
             background-size: cover;
             background-position: center;
@@ -45,7 +34,7 @@
 
     <!-- 頂部標題海報風格區 -->
     <header class="bg-watercolor shadow-md border-b-4 border-blue-800 text-slate-800 py-12 px-4 text-center relative overflow-hidden">
-        <div class="max-w-4xl mx-auto relative z-10 bg-white/50 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-lg border border-white/50">
+        <div class="max-w-4xl mx-auto relative z-10 bg-white/35 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-lg border border-white/50">
             <span class="inline-block bg-blue-900 text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest shadow">基隆氣象站 80 周年紀念活動</span>
             <h1 class="text-3xl md:text-5xl font-th text-blue-950 font-black tracking-wider mb-2 drop-shadow-sm">雨港海韻 · 氣象八十</h1>
             <p class="text-lg md:text-xl font-bold text-blue-900 tracking-widest">站慶 11/11 天氣預測大挑戰</p>
@@ -192,7 +181,7 @@
             <!-- 直播抽獎規則 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
-                將於基隆氣象站臉書直播，抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
+                直播抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
                 <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！ <span class="underline">若撥打響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</span> ， 
                 <strong class="text-emerald-600 font-bold">將直接開放現場 Call In 遞補</strong> ！撥入手機號碼及撥通時所需的通關密語，將公告於臉書直播貼文
             </p>
@@ -460,7 +449,7 @@
             });
         });
 
-        // 儲存圖片按鈕
+        // 儲存圖片按鈕 (手機走系統分享，電腦版直接強迫下載)
         document.getElementById('saveImageBtn').addEventListener('click', async function() {
             const cardArea = document.getElementById('resultCardArea');
             try {
@@ -468,12 +457,13 @@
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`, { type: 'image/png' });
                     
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    // 如果是手機，且支援檔案分享，就用手機的原生分享
+                    if (IS_MOBILE && navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
                                 files: [file],
-                                title: '基隆氣象站 80 週年天氣預測投票憑證',
-                                text: '這是我的基隆氣象站 80 週年天氣預測投票憑證！'
+                                title: '基隆氣象站80週年天氣預測投票憑證',
+                                text: '這是我的基隆氣象站80週年天氣預測投票憑證！'
                             });
                             return;
                         } catch (err) {
@@ -481,6 +471,7 @@
                         }
                     }
 
+                    // 電腦版（或手機不支援分享時），直接觸發下載
                     const link = document.createElement('a');
                     link.download = `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`;
                     link.href = URL.createObjectURL(blob);
@@ -529,18 +520,29 @@
             }
         });
 
-        // ===== 分享到 Facebook (導向固定連結、無縮圖、不帶預設文字) =====
+        // ===== 分享到 Facebook (1. 複製預設文字與固定網址 -> 2. 導向 FB 發文頁面 -> 3. 提示貼上) =====
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const fixedUrl = getPageUrl();
-            
-            // 使用 Facebook 標準分享網址，只帶入固定網址參數
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fixedUrl)}`;
-            
-            // 各大內建瀏覽器（FB, Line, iOS, Android）與跨平台自動跳轉
+            // 1. 取得預設文字與固定網址，並組合在一起
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\n${getPageUrl()}`;
+
+            // 2. 自動將組合好的內容複製到剪貼簿（暫存）
+            const copied = legacyCopy(shareText);
+            if (copied) {
+                showToast("文案與網址已複製！", "進入 Facebook 後，請在發文框「長按或 Ctrl+V 貼上」即可");
+            } else {
+                alert("已準備好文案，請手動複製！");
+            }
+
+            // 3. 導向 Facebook 發文/首頁面
+            const fbUrl = `https://www.facebook.com/`;
+
+            // 依照手機與電腦分流處理
             if (IS_MOBILE) {
+                // 手機：直接在當前頁面跳轉到 FB
                 window.location.href = fbUrl;
             } else {
-                const w = window.open(fbUrl, '_blank', 'width=600,height=400');
+                // 電腦版：開新視窗或直接跳轉
+                const w = window.open(fbUrl, '_blank');
                 if (!w) {
                     window.location.href = fbUrl;
                 }
