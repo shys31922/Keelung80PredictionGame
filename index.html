@@ -176,14 +176,14 @@
             <!-- 投票規則備註 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 💡 <strong class="text-blue-950">投票規則及領獎聯絡電話：</strong> 可以重複投票，將以您 <strong class="text-blue-700 font-bold">手機號碼最後 1 次送出的投票</strong> 為主！
-                「參加就有獎」請於 <strong class="text-blue-700 font-bold">今年底 115/12/31 前</strong> ，至 <span class="underline">基隆氣象站 (02-2422-4240)</span> 或 <span class="underline">中央氣象署大氣觀測組 (02-2349-1025)</span> 親自領取
+                「參加就有獎」請於 <strong class="text-blue-700 font-bold">今年底 2026/12/31 前</strong> ，至 <span class="underline">基隆氣象站 (02-2422-4240)</span> 或 <span class="underline">中央氣象署大氣觀測組 (02-2349-1025)</span> 親自領取
             </p>
             <!-- 直播抽獎規則 -->
             <p class="text-sm md:text-base bg-white p-4 rounded-xl border border-blue-100 shadow-sm leading-relaxed">
                 📱 <strong class="text-blue-950">直播抽獎規則：</strong> 
                 直播抽出「您說的對獎」及「參加加碼獎」幸運得獎人，
-                <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！ <span class="underline">若撥打響鈴 5 聲未接聽視為棄權，並再抽出 1 組得獎人號碼，若抽出 2 組得獎人號碼撥打皆未接聽</span> ， 
-                <strong class="text-emerald-600 font-bold">將直接開放現場 Call In 遞補</strong> ！ <strong>撥入手機號碼</strong> 及 <strong>撥通時所需的通關密語</strong> ，將公告於臉書直播貼文
+                <strong class="text-amber-600 font-bold">請務必留意手機鈴聲</strong> ！ <span class="underline">得獎電話響鈴 5 聲未接，視同棄權，並再抽出 1 組得獎號碼，若連續 2 組得獎人皆未接聽</span> ， 
+                <strong class="text-emerald-600 font-bold">則直接開放現場 Call In 遞補</strong> ！ <strong>撥入手機號碼</strong> 及 <strong>撥通所需的通關密語</strong> ，屆時將公告於臉書直播貼文
             </p>
         </div>
 
@@ -471,7 +471,7 @@
                     link.download = `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`;
                     link.href = URL.createObjectURL(blob);
                     link.click();
-                    showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
+                    // showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
                 });
             } catch (err) {
                 console.error(err);
