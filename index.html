@@ -511,7 +511,7 @@
         // ===== 分享到 LINE =====
         document.getElementById('shareLineBtn').addEventListener('click', function() {
             const shareText = `【基隆氣象站 80 週年天氣預測投票】我剛剛已經完成投票囉！\n🎯 我的預測：${currentFormData.prediction}！\n快來一起參加 11/11 站慶天氣預測抽大獎！`;
-            const url = getPageUrl();
+            const url = getPageUrl() + '&openExternalBrowser=1';
             if (IS_MOBILE) {
                 window.location.href = 'https://line.me/R/msg/text/?' + encodeURIComponent(shareText + '\n' + url);
             } else {
