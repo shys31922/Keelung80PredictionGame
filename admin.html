@@ -174,9 +174,21 @@
         async function loadVotes() {
             let rawData = [];
             if (GOOGLE_SHEET_API_URL) {
+                let key = sessionStorage.getItem('admin_key');
+                if (!key) {
+                    key = prompt('請輸入管理員密鑰：');
+                    if (!key) { renderStatsAndTable([]); return; }
+                }
                 try {
-                    const response = await fetch(GOOGLE_SHEET_API_URL);
+                    const response = await fetch(GOOGLE_SHEET_API_URL + '?action=admin&key=' + encodeURIComponent(key));
                     rawData = await response.json();
+                    if (rawData && rawData.error) {
+                        sessionStorage.removeItem('admin_key');
+                        alert('密鑰錯誤或無權限，請按「重新整理數據」再輸入一次。');
+                        rawData = [];
+                    } else {
+                        sessionStorage.setItem('admin_key', key);
+                    }
                 } catch (e) {
                     console.error("無法讀取 Google Sheets", e);
                     rawData = [];
