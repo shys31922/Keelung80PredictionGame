@@ -143,7 +143,9 @@
                 }
             }
             
+            // 完美對應包含英文括號的新欄位名稱與舊欄位名稱相容性
             globalData = data.map(v => ({
+                serialNumber: v["序號 (Serialnumber)"] || v.serialNumber || '',
                 time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
                 name: v["姓名 (Name)"] !== undefined ? v["姓名 (Name)"] : (v.name || v.姓名 || ''),
                 phone: String(v["手機號碼 (Phone)"] !== undefined ? v["手機號碼 (Phone)"] : (v.phone || v.手機號碼 || '')).trim(),
@@ -242,7 +244,10 @@
                 const formattedTime = v.time ? new Date(v.time).toLocaleString() : '剛剛';
 
                 tr.innerHTML = `
-                    <td class="px-6 py-3.5 text-slate-400 text-xs">${formattedTime}</td>
+                    <td class="px-6 py-3.5 text-slate-400 text-xs">
+                        <div class="text-sky-400 font-mono font-bold">${v.serialNumber || ''}</div>
+                        <div class="text-slate-400">${formattedTime}</div>
+                    </td>
                     <td class="px-6 py-3.5 font-medium text-white">${v.name}</td>
                     <td class="px-6 py-3.5 font-mono text-slate-300">${v.phone}</td>
                     <td class="px-6 py-3.5"><span class="bg-sky-950 text-sky-300 border border-sky-800/50 px-3 py-1 rounded-full text-xs font-semibold">${v.prediction}</span></td>
