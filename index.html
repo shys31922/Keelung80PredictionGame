@@ -492,18 +492,23 @@
         function legacyCopy(text) {
             const textarea = document.createElement("textarea");
             textarea.value = text;
+            textarea.setAttribute("readonly", "");
             textarea.style.position = "fixed";
+            textarea.style.top = "0";
+            textarea.style.left = "0";
+            textarea.style.opacity = "0";
             document.body.appendChild(textarea);
             textarea.focus();
             textarea.select();
+            textarea.setSelectionRange(0, text.length);
+            let successful = false;
             try {
-                const successful = document.execCommand('copy');
-                document.body.removeChild(textarea);
-                return successful;
+                successful = document.execCommand('copy');
             } catch (err) {
-                document.body.removeChild(textarea);
-                return false;
+                successful = false;
             }
+            document.body.removeChild(textarea);
+            return successful;
         }
 
         const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -520,49 +525,40 @@
             }
         });
 
-        // ===== 分享到 Facebook (相容 LINE/FB 內建瀏覽器與電腦版，導向發文介面) =====
-        document.getElementById('shareFbBtn').addEventListener('click', async function() {
-            // 1. 組合預設文字與固定網址
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\n${getPageUrl()}`;
-
-            // 💡 這裡換成 Facebook 專用的建立貼文/動態頁面網址
-            const fbUrl = `https://www.facebook.com/`; // 或使用專用建立頁面：https://www.facebook.com/sharer/creation/
-
-            // 2. 嘗試使用現代瀏覽器的 navigator.clipboard 寫入剪貼簿
-            let copied = false;
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(shareText);
-                    copied = true;
-                }
-            } catch (err) {
-                console.log('Clipboard API 失敗，改用傳統備用方法');
+        // ===== 分享到 Facebook =====
+        document.getElementById('shareFbBtn').addEventListener('click', function() {
+            const pageUrl = getPageUrl();
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\n${pageUrl}`;
+        
+            // 1. 先同步複製（這裡不能用 await，否則會失去使用者點擊狀態）
+            let copied = legacyCopy(shareText);
+            if (!copied && navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(shareText).catch(function() {});
+                copied = true;
             }
-
-            if (!copied) {
-                copied = legacyCopy(shareText);
-            }
-
-            // 3. 給予提示
-            if (copied) {
-                showToast("文案與網址已複製！", "進入 Facebook 後，請直接在發文框貼上即可。");
-            }
-
-            // 4. 依照手機與電腦分流跳轉（保留 300 毫秒延遲確保剪貼簿順利寫入）
+        
+            // 2. FB 發文分享頁（會帶入網址預覽，使用者貼上文案即可）
+            const encoded = encodeURIComponent(pageUrl);
+        
             if (IS_MOBILE) {
-                setTimeout(function() {
-                    window.location.href = fbUrl;
-                }, 300);
+                // 手機：先跳提示確認，再跳轉，確保使用者看得到「已複製」
+                const msg = copied
+                    ? "✅ 文案已複製！\n\n按「確定」前往 Facebook，在發文框「長按 → 貼上」即可。"
+                    : "⚠️ 自動複製失敗，請先手動複製以下文案：\n\n" + shareText + "\n\n複製後按「確定」前往 Facebook。";
+                if (confirm(msg)) {
+                    window.location.href = `https://m.facebook.com/sharer.php?u=${encoded}`;
+                }
             } else {
-                const w = window.open(fbUrl, '_blank');
-                if (!w) {
-                    setTimeout(function() {
-                        window.location.href = fbUrl;
-                    }, 300);
+                // 電腦：直接開新視窗（同步呼叫）
+                const w = window.open(`https://www.facebook.com/sharer/sharer.php?u=${encoded}`, '_blank');
+                if (w) {
+                    showToast("文案已複製！", "請在 Facebook 發文框按 Ctrl+V 貼上");
+                } else {
+                    // 被擋就留在原頁，不要跳走
+                    showToast("彈出視窗被瀏覽器封鎖", "請允許本網站的彈出視窗後再按一次");
                 }
             }
         });
-
         document.getElementById('closeSuccessBtn').addEventListener('click', function() {
             document.getElementById('successModal').classList.add('hidden');
             showToast("投票已完成！", "您的預測已經順利登錄！");
