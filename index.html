@@ -99,7 +99,7 @@
                         </label>
                         <label class="border-2 border-slate-200 rounded-xl p-4 flex flex-col items-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
                             <input type="radio" name="prediction" value="4.下雪" required class="mb-2 text-blue-600 focus:ring-blue-500">
-                            <span class="text-2xl mb-1">❄️️</span>
+                            <span class="text-2xl mb-1">❄</span>
                             <span class="font-bold text-slate-800">4. 下雪</span>
                         </label>
                     </div>
@@ -225,7 +225,7 @@
                 <p><strong>預測天氣：</strong> <span id="resultPrediction"></span></p>
             </div>
 
-            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-900 leading-relaxed text-left">
+            <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-sm text-amber-900 leading-relaxed text-left">
                 📸 <strong>點擊下方按鈕，留存投票紀錄或分享給好友！</strong>
             </div>
 
@@ -235,7 +235,7 @@
                     <span>📋</span><span>複製資訊</span>
                 </button>
                 <button type="button" id="saveImageBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
-                    <span>🖼️</span><span>存檔圖片</span>
+                    <span>🖼️</span><span>儲存圖片</span>
                 </button>
                 <button type="button" id="shareLineBtn" class="bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-2.5 px-2 rounded-xl transition shadow-md text-xs flex items-center justify-center space-x-1">
                     <span>💚</span><span>分享 LINE</span>
@@ -268,7 +268,7 @@
 
     <!-- 前台投票邏輯與通知控制 -->
     <script>
-        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; // 請換成您的 Apps Script 網址
+        let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
         function showToast(title, desc = '') {
             const toast = document.getElementById('toastNotification');
@@ -292,7 +292,6 @@
             try {
                 const response = await fetch(GOOGLE_SHEET_API_URL);
                 const data = await response.json();
-                // 扣除標題列
                 const count = (data && Array.isArray(data) && data.length > 1) ? data.length - 1 : 0;
                 document.getElementById('publicTotalCount').innerText = count;
             } catch (e) {
@@ -301,6 +300,7 @@
         }
 
         let currentFormData = {};
+        const FIXED_SHARE_URL = "https://shys31922.github.io/Keelung80PredictionGame/?t=1111";
 
         document.getElementById('preSubmitBtn').addEventListener('click', function(e) {
             e.preventDefault();
@@ -335,7 +335,6 @@
             document.getElementById('confirmModal').classList.add('hidden');
         });
 
-        // 確認送出：先計算當前序號，再送資料到試算表
         document.getElementById('finalSubmitBtn').addEventListener('click', async function() {
             document.getElementById('confirmModal').classList.add('hidden');
             
@@ -352,22 +351,20 @@
 
             const finalBtn = document.getElementById('preSubmitBtn');
             finalBtn.disabled = true;
-            finalBtn.innerText = "正在傳送至伺服器...";
+            finalBtn.innerText = "正在傳送您的預測...";
 
             let generatedSerial = "KL80-00000001";
 
             if (GOOGLE_SHEET_API_URL) {
                 try {
-                    // 1. 先抓取目前試算表的資料來計算正確的下一筆流水號
                     const getRes = await fetch(GOOGLE_SHEET_API_URL);
                     const rows = await getRes.json();
                     let nextSeq = 1;
                     if (rows && Array.isArray(rows) && rows.length > 0) {
-                        nextSeq = rows.length; // 如果有標題列加已有資料，rows.length 剛好等於下一筆的序號數
+                        nextSeq = rows.length;
                     }
                     generatedSerial = "KL80-" + String(nextSeq).padStart(8, '0');
 
-                    // 2. 用 no-cors 模式發送 POST 請求寫入資料
                     await fetch(GOOGLE_SHEET_API_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -395,10 +392,8 @@
             setTimeout(fetchPublicTotal, 2000);
         });
 
-        // 複製投票資訊
+        // 1. 修正後的「複製資訊」按鈕
         document.getElementById('copyInfoBtn').addEventListener('click', function() {
-            const textToCopy = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentRegistryName}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
-            // 修正複製變數
             const safeText = `【基隆氣象站 80 週年天氣預測投票憑證】\n序號：${currentFormData.serialNumber}\n暱稱：${currentFormData.name}\n手機：${currentFormData.phone}\n預測：${currentFormData.prediction}\n時間：${currentFormData.time}`;
             navigator.clipboard.writeText(safeText).then(() => {
                 showToast("複製成功！", "已將投票資訊複製到剪貼簿。");
@@ -407,32 +402,58 @@
             });
         });
 
-        // 存檔圖片按鈕功能 (html2canvas)
-        document.getElementById('saveImageBtn').addEventListener('click', function() {
+        // 2. 「儲存圖片」按鈕功能 (手機支援原生 Share 存入相簿 / 電腦下載)
+        document.getElementById('saveImageBtn').addEventListener('click', async function() {
             const cardArea = document.getElementById('resultCardArea');
-            html2canvas(cardArea, { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `基隆氣象站80週年天氣預測投票憑證_${currentFormData.serialNumber}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
-            }).catch(err => {
+            try {
+                const canvas = await html2canvas(cardArea, { scale: 2 });
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `基隆氣象站80週年預測憑證_${currentFormData.serialNumber}.png`, { type: 'image/png' });
+                    
+                    // 嘗試使用行動裝置原生 Share API (可直接存至手機相簿)
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: '基隆氣象站 80 週年投票憑證',
+                                text: '這是我的基隆氣象站 80 週年天氣預測憑證！'
+                            });
+                            return;
+                        } catch (err) {
+                            console.log('使用者取消分享或不支援');
+                        }
+                    }
+
+                    // 傳統下載方式
+                    const link = document.createElement('a');
+                    link.download = `基隆氣象站80週年天氣預測憑證_${currentFormData.serialNumber}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                    showToast("圖片已儲存！", "投票憑證已成功下載至您的裝置。");
+                });
+            } catch (err) {
                 console.error(err);
                 alert("圖片產生失敗，請直接使用螢幕截圖。");
-            });
+            }
         });
 
-        // 分享到 LINE
+        // 3. & 5. 分享到 LINE (使用固定網址，且不含時間)
         document.getElementById('shareLineBtn').addEventListener('click', function() {
-            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛完成 11/11 站慶天氣預測囉！\n快來一起參加活動抽大獎、拿紀念小物！`;
-            const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}`;
+            const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛完成 11/11 站慶天氣預測囉！\n我的預測：${currentFormData.prediction}\n快來一起參加活動抽大獎！`;
+            const lineUrl = `https://social-plugins.line.me/lineit/share?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(FIXED_SHARE_URL)}`;
             window.open(lineUrl, '_blank');
         });
 
-        // 分享到 Facebook
+        // 4. & 5. 分享到 Facebook (使用固定網址，不含時間，自動複製純文字避免縮圖困擾)
         document.getElementById('shareFbBtn').addEventListener('click', function() {
-            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+            const shareText = `【基隆氣象站 80 週年天氣預測】\n我剛剛完成 11/11 站慶天氣預測了！我的預測是：${currentFormData.prediction} ☀️🌧️\n快來一起參加活動拿好禮：${FIXED_SHARE_URL}`;
+            
+            // 同步複製文字到剪貼簿，方便用戶直接貼上純文字分享
+            navigator.clipboard.writeText(shareText);
+
+            const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(FIXED_SHARE_URL)}`;
             window.open(fbUrl, '_blank');
+            showToast("已複製分享文字！", "貼上至貼文即可發布。");
         });
 
         document.getElementById('closeSuccessBtn').addEventListener('click', function() {
