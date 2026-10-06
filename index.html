@@ -333,7 +333,7 @@
 
             setTimeout(() => {
                 toast.className = "fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 flex items-center bg-white shadow-2xl border-l-4 rounded-xl px-6 py-4 max-w-sm transition-all duration-300";
-            }, 4000);
+            }, 8000);
         }
 
         async function fetchPublicTotal() {
@@ -520,14 +520,15 @@
             }
         });
 
-        // ===== 分享到 Facebook (相容 LINE/FB 內建瀏覽器與電腦版) =====
+        // ===== 分享到 Facebook (相容 LINE/FB 內建瀏覽器與電腦版，導向發文介面) =====
         document.getElementById('shareFbBtn').addEventListener('click', async function() {
             // 1. 組合預設文字與固定網址
             const shareText = `【基隆氣象站 80 週年天氣預測投票】\n我剛剛已經完成投票囉！\n🎯 我的預測：「${currentFormData.prediction}」！\n快來一起參加 11/11 站慶天氣預測抽大獎！\n${getPageUrl()}`;
 
-            const fbUrl = `https://www.facebook.com/`;
+            // 💡 這裡換成 Facebook 專用的建立貼文/動態頁面網址
+            const fbUrl = `https://www.facebook.com/`; // 或使用專用建立頁面：https://www.facebook.com/sharer/creation/
 
-            // 2. 嘗試使用現代瀏覽器的 navigator.clipboard (對手機內建瀏覽器支援度最好)
+            // 2. 嘗試使用現代瀏覽器的 navigator.clipboard 寫入剪貼簿
             let copied = false;
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -538,23 +539,21 @@
                 console.log('Clipboard API 失敗，改用傳統備用方法');
             }
 
-            // 如果現代方法失敗，改用傳統 legacyCopy
             if (!copied) {
                 copied = legacyCopy(shareText);
             }
 
-            // 3. 給予提示並流暢跳轉
+            // 3. 給予提示
             if (copied) {
-                showToast("文案與網址已複製！", "進入 Facebook 後，請長按或 Ctrl+V 貼上即可。");
+                showToast("文案與網址已複製！", "進入 Facebook 後，請直接在發文框貼上即可。");
             }
 
-            // 4. 依照手機與電腦分流跳轉（加入極短暫的 300 毫秒延遲，確保剪貼簿順利寫入再跳走）
+            // 4. 依照手機與電腦分流跳轉（保留 300 毫秒延遲確保剪貼簿順利寫入）
             if (IS_MOBILE) {
                 setTimeout(function() {
                     window.location.href = fbUrl;
                 }, 300);
             } else {
-                // 電腦版先開新視窗
                 const w = window.open(fbUrl, '_blank');
                 if (!w) {
                     setTimeout(function() {
