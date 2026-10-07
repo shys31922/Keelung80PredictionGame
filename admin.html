@@ -59,10 +59,21 @@
             </div>
         </div>
 
+        <!-- 數據統計模式切換按鈕區 -->
+        <div class="flex justify-between items-center bg-white dark:bg-slate-800 px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow transition-colors duration-200">
+            <div class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                📊 統計數據範圍切換（影響上方摘要、柱狀圖與圓餅圖）：
+            </div>
+            <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                <button onclick="switchStatMode('all')" id="btnStatAll" class="px-4 py-2 rounded-lg font-medium transition bg-sky-600 text-white shadow">全部數據</button>
+                <button onclick="switchStatMode('unique')" id="btnStatUnique" class="px-4 py-2 rounded-lg font-medium transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">獨立投票人數 (去重)</button>
+            </div>
+        </div>
+
         <!-- 統計摘要數字 -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center shadow transition-colors duration-200">
-                <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">總投票數量 (提交總次數)</div>
+                <div id="statTotalLabel" class="text-xs text-slate-500 dark:text-slate-400 font-medium">總投票數量 (提交總次數)</div>
                 <div id="statTotalSubmissions" class="text-3xl font-bold text-sky-600 dark:text-sky-400 mt-1">0</div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center shadow transition-colors duration-200">
@@ -134,7 +145,9 @@
         let GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyQ_BMo5AXB4OOa4tT1EWX16cvB9irzlXQnK7qlAKyRa7z5zhHdnQfds9Zw-DiABgr_/exec"; 
 
         let globalData = [];
-        let currentViewMode = 'recent'; 
+        let currentFilteredData = []; // 當前篩選（時間區間）後的核心資料
+        let currentViewMode = 'recent'; // 明細清單檢視模式
+        let currentStatMode = 'all';    // 統計圖表及摘要模式： 'all' 或 'unique'
         let barChartInstance = null;
         let pieChartInstance = null;
 
@@ -177,7 +190,7 @@
                 let key = sessionStorage.getItem('admin_key');
                 if (!key) {
                     key = prompt('請輸入管理員密鑰：');
-                    if (!key) { renderStatsAndTable([]); return; }
+                    if (!key) { renderDashboard([]); return; }
                 }
                 try {
                     const response = await fetch(GOOGLE_SHEET_API_URL + '?action=admin&key=' + encodeURIComponent(key));
@@ -198,8 +211,6 @@
             // 自動判斷並相容「二維陣列」或「物件陣列」
             if (Array.isArray(rawData) && rawData.length > 0) {
                 if (Array.isArray(rawData[0])) {
-                    // 二維陣列格式：[ [標題1, 標題2...], [值1, 值2...] ]
-                    // 對應欄位名稱：序號 (Serialnumber), 時間 (Timestamp), 姓名 (Name), 手機號碼 (Phone), 預測天氣選項 (Prediction)
                     globalData = rawData.slice(1).map(row => ({
                         serialNumber: row[0] || '',
                         time: row[1] || new Date().toISOString(),
@@ -208,7 +219,6 @@
                         prediction: row[4] || ''
                     }));
                 } else {
-                    // 物件陣列格式：[ { 欄位名: 值 }, ... ]
                     globalData = rawData.map(v => ({
                         serialNumber: v["序號 (Serialnumber)"] || v.serialNumber || '',
                         time: v["時間 (Timestamp)"] || v.time || v.時間 || new Date().toISOString(),
@@ -221,7 +231,24 @@
                 globalData = [];
             }
 
-            renderStatsAndTable(globalData);
+            filterVotes(); // 載入後套用目前的篩選區間
+        }
+
+        // 切換統計模式 (全部數據 vs 獨立投票人數去重)
+        function switchStatMode(mode) {
+            currentStatMode = mode;
+            const btnAll = document.getElementById('btnStatAll');
+            const btnUnique = document.getElementById('btnStatUnique');
+
+            if (mode === 'all') {
+                btnAll.className = "px-4 py-2 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnUnique.className = "px-4 py-2 rounded-lg font-medium transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white";
+            } else {
+                btnUnique.className = "px-4 py-2 rounded-lg font-medium transition bg-sky-600 text-white shadow";
+                btnAll.className = "px-4 py-2 rounded-lg font-medium transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white";
+            }
+
+            renderDashboard(currentFilteredData);
         }
 
         function switchViewMode(mode) {
@@ -237,35 +264,59 @@
                 btnRecent.className = "px-3 py-1.5 rounded-lg font-medium transition text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white";
             }
 
-            filterVotes();
+            renderTable(currentFilteredData);
         }
 
-        function renderStatsAndTable(data) {
-            const tbody = document.getElementById('voteTableBody');
-            tbody.innerHTML = '';
+        // 取得手機號碼去重後的資料（手機重複時以最新 1 筆為主）
+        function getUniqueData(data) {
+            const phoneMap = new Map();
+            // 假設 data 是按時間由舊到新排序，後出現的會覆蓋先出現的（即保留最新一筆）
+            // 如果資料順序不確定，先依時間排序確保準確性
+            const sortedData = [...data].sort((a, b) => new Date(a.time) - new Date(b.time));
+            
+            sortedData.forEach(item => {
+                if (item.phone) {
+                    phoneMap.set(item.phone, item);
+                } else {
+                    // 若無手機號碼，則視為獨立個體不合併
+                    phoneMap.set(item.serialNumber + Math.random(), item);
+                }
+            });
+            return Array.from(phoneMap.values());
+        }
 
+        function renderDashboard(data) {
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">目前尚無任何投票資料</td></tr>`;
                 document.getElementById('statTotalSubmissions').innerText = '0';
                 document.getElementById('statUniqueUsers').innerText = '0';
                 document.getElementById('statTop').innerText = '-';
                 lastCounts = { '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
                 updateCharts(lastCounts);
-                document.getElementById('tableCountTip').innerText = '';
+                renderTable([]);
                 return;
             }
 
-            // 1. 總投票數量
-            const totalSubmissions = data.length;
-            document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
-
-            // 2. 獨立投票人數 (手機號碼去重)
+            // 1. 計算獨立投票人數（不論目前選哪種統計模式，總獨立人數固定顯示）
             const uniquePhones = new Set(data.map(v => v.phone).filter(p => p !== ''));
             document.getElementById('statUniqueUsers').innerText = uniquePhones.size;
 
+            // 2. 決定統計分析所要使用的資料來源（全部 vs 獨立去重）
+            let statTargetData = data;
+            const totalSubmissions = data.length;
+            const uniqueDataList = getUniqueData(data);
+
+            if (currentStatMode === 'unique') {
+                statTargetData = uniqueDataList;
+                document.getElementById('statTotalLabel').innerText = '獨立投票人數 (手機號碼去重)';
+                document.getElementById('statTotalSubmissions').innerText = uniqueDataList.length;
+            } else {
+                document.getElementById('statTotalLabel').innerText = '總投票數量 (提交總次數)';
+                document.getElementById('statTotalSubmissions').innerText = totalSubmissions;
+            }
+
             // 3. 各選項統計
             let counts = { '1.未降雨': 0, '2.降雨': 0, '3.水龍捲': 0, '4.下雪': 0 };
-            data.forEach(v => {
+            statTargetData.forEach(v => {
                 let opt = String(v.prediction);
                 if (opt.includes('未')) opt = '1.未降雨';
                 else if (opt.includes('雨')) opt = '2.降雨';
@@ -296,10 +347,24 @@
             }
             document.getElementById('statTop').innerText = topText;
 
-            // 更新圖表
+            // 5. 更新圖表
             updateCharts(counts);
 
-            // 5. 處理列表顯示：最近100筆或最初100筆
+            // 6. 渲染明細清單表格
+            renderTable(data);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('voteTableBody');
+            tbody.innerHTML = '';
+            const totalSubmissions = data.length;
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500">目前尚無任何投票資料</td></tr>`;
+                document.getElementById('tableCountTip').innerText = '';
+                return;
+            }
+
             let displayData = [];
             if (currentViewMode === 'recent') {
                 displayData = [...data].reverse().slice(0, 100);
@@ -400,13 +465,16 @@
                     return t >= startTime && t <= endTime;
                 });
             }
-            renderStatsAndTable(filtered);
+            
+            currentFilteredData = filtered;
+            renderDashboard(currentFilteredData);
         }
 
         function resetFilter() {
             document.getElementById('filterStart').value = '';
             document.getElementById('filterEnd').value = '';
-            renderStatsAndTable(globalData);
+            currentFilteredData = [...globalData];
+            renderDashboard(currentFilteredData);
         }
 
         window.onload = function() {
