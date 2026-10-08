@@ -337,14 +337,18 @@
         }
 
         async function fetchPublicTotal() {
+            const el = document.getElementById('publicTotalCount');
+            try { const c = localStorage.getItem('pub_count'); if (c) el.innerText = c; } catch (e) {}
             if (!GOOGLE_SHEET_API_URL) return;
             try {
                 const response = await fetch(GOOGLE_SHEET_API_URL);
                 const data = await response.json();
-                document.getElementById('publicTotalCount').innerText = data.count ?? 0;
+                const n = data.count ?? 0;
+                el.innerText = n;
+                try { localStorage.setItem('pub_count', n); } catch (e) {}
             } catch (e) {
                 console.error("無法取得投票人次", e);
-                document.getElementById('publicTotalCount').innerText = "0";
+                if (el.innerText === "載入中...") el.innerText = "0";
             }
         }
 
@@ -410,6 +414,7 @@
                 const result = await res.json();
                 if (!result.ok) throw new Error(result.error || 'server error');
                 generatedSerial = result.serial;
+                if (result.count !== undefined) document.getElementById('publicTotalCount').innerText = result.count;
             } catch (error) {
                 console.error("送出表單發生錯誤", error);
                 alert("目前連線忙碌，無法確認是否送出成功，請稍後再按 1 次送出（可重複投票，以最後 1 次為主）");
@@ -431,7 +436,6 @@
             finalBtn.disabled = false;
             finalBtn.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 送出`;
             
-            setTimeout(fetchPublicTotal, 2000);
         });
 
         // 複製資訊按鈕
@@ -568,9 +572,7 @@
             showToast("投票已完成！", "您的預測已經順利登錄！");
         });
 
-        window.onload = function() {
-            fetchPublicTotal();
-        };
+        fetchPublicTotal();
     </script>
 </body>
 </html>
